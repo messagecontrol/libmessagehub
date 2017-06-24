@@ -28,6 +28,7 @@ set(SOURCES
     ${SENDER_SRCS} 
 )
 
+message("Sources: " ${SOURCES})
 # Create Executable
 add_executable(MessageHub ${SOURCES})
 target_link_libraries(MessageHub ${ZeroMQ_LIBRARY})
