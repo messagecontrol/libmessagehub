@@ -30,13 +30,17 @@ void MessageHub::process(std::string s) {
 
 void MessageHub::run() {
     msgProcessor = std::make_unique<std::thread>(std::thread(&MessageHub::_run, this));
+    std::cout << "MSGPROCESSOR INITIALIZED\n";
     receiver = std::make_unique<std::thread>(std::thread(&MessageHub::_run_recevier, this));
+    std::cout << "RECEIVER INITIALIZED\n";
     sender = std::make_unique<std::thread>(std::thread(&MessageHub::_run_sender, this));
+    std::cout << "SENDER INITIALIZED\n";
 }
 
 void MessageHub::_run() {
     while (still_process) {
-        if(!inQueue.empty()) {;
+        if(!inQueue.empty()) {
+            std::cout << "READING INBOX\n";
             Message msg(inQueue.front().get());
             process(msg.toString());
             if (msg.needResponse()) {
@@ -50,6 +54,8 @@ void MessageHub::_run() {
 
 void MessageHub::_run_sender() {
     while (still_send) {
+        std::cout << ":";
+        sleep(1);
         if (!outQueue.empty()) {
             outSock.connect("tcp://" + outQueue.front()->first);
             outSock.send(outQueue.front()->second);
@@ -60,8 +66,12 @@ void MessageHub::_run_sender() {
 }
 
 void MessageHub::_run_recevier() {
-    inSock.bind("tcp//*:" + std::to_string(port));
+    std::cout << "ATTEMPTING TO BIND SOCKET\n";
+    inSock.bind("tcp://*:" + std::to_string(port));
+    std::cout << "BINDED INSOCK\n";
     while (still_receive) {
+        std::cout << "0";
+        sleep(1);
         zmq::message_t msg;
         inSock.recv(&msg);
         inQueue.push(std::unique_ptr<zmq::message_t>(&msg));
