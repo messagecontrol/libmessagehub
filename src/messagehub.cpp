@@ -72,7 +72,7 @@ void MessageHub::_run_sender() {
             std::cout << "OK\n";
             outSock.send(outQueue.front().second);
             outQueue.pop();
-            outSock.close();
+            //outSock.close();
         }
     }
 }
@@ -101,6 +101,6 @@ std::string MessageHub::fullAddr() {
 
 void MessageHub::send(std::string m, std::string dst) {
     Message msg(m);
-    msg.writeHeader(DELIMITERS_V1, "TEST2", fullAddr());
+    msg.writeHeader(DELIMITERS_V1, "TEST2", fullAddr(), true);
     outQueue.push(std::make_pair(dst, msg.toZmqMsg()));
 }

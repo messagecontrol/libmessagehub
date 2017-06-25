@@ -34,7 +34,6 @@ void Message::parseString(std::string s) {
     int iteration = 0;
     while ((pos = s.find(DELIMITER)) != std::string::npos) {
         token = s.substr(0, pos);
-        std::cout << token << std::endl;
         if (end_header && end_msg) {
             _string = token;
             end_msg = false;
@@ -76,9 +75,10 @@ std::string Message::returnAddr() {
     std::string token;
     while ((pos = s.find("::")) != std::string::npos) {
         token = s.substr(0,pos);
-        std::cout << token << "\n";
         s.erase(0, pos + 2);
     }
+    
+    std::cout << token << "\n";
     return token;
 }
 

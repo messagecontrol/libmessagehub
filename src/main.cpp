@@ -18,9 +18,11 @@ int main(int argc, char ** argv) {
     MessageHub hub(hostname, argv[1], 5555);
     std::cout << "initialized hub\n";
     hub.run();
-    sleep(7);
-    hub.send("HELLO", argv[2]);
-    std::cout << "sent msg\n";
     sleep(3);
+    while (true) {
+        hub.send("HELLO", argv[2]);
+        std::cout << "sent msg\n";
+        sleep(3);
+    }
     return EXIT_SUCCESS;
 }
