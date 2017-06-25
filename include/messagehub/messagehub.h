@@ -11,23 +11,32 @@
 
 #include "messagehub/message.h"
 
+#define DEFAULT_PORT 5555
+
 class MessageHub {
 
 protected:
     
-    std::vector<zmq::socket_t> sockets;
     std::string identity;
-    std::thread sender, manager;
-    std::vector<std::unique_ptr<std::thread> > receviers;
-    std::priority_queue<std::unique_ptr<Message> > msgQueue;
-    
+    std::unique_ptr<std::thread> manager, msgProcessor, receiver, sender;
+    std::queue<std::unique_ptr<zmq::message_t> > inQueue;
+    std::queue<std::unique_ptr<std::pair<std::string, zmq::message_t> > > outQueue;
+    zmq::context_t context;
+    zmq::socket_t inSock, outSock;
+    int port;
+    std::string hostAddr;
+    bool still_process, still_receive, still_send;
     void _run();    
+    void _run_sender();
+    void _run_recevier();
+    void process(std::string s);
 
 public:
     
-    MessageHub(std::string id = "anon");
+    MessageHub(std::string id, std::string hostip, int listenPort = DEFAULT_PORT);
     ~MessageHub();
     void run();
+    std::string fullAddr();
 };
 
 #endif

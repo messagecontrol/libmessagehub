@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 2.8)
 
 set(MESSAGEHUB_SRCS
     src/messagehub.cpp
+    src/message.cpp
     PARENT_SCOPE    
 )
 
