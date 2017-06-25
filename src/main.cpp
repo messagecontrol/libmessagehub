@@ -3,6 +3,10 @@
 #include <iostream>
 #include <messagehub/messagehub.h>
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 64
+#endif
+
 int main(int argc, char ** argv) {
     char hostname[HOST_NAME_MAX];
     gethostname(hostname, HOST_NAME_MAX);
