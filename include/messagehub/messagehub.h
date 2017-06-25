@@ -37,6 +37,7 @@ public:
     ~MessageHub();
     void run();
     std::string fullAddr();
+    void send(std::string msg, std::string dst);
 };
 
 #endif

@@ -4,7 +4,7 @@ project(MessageHub)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lzmq -std=c++14 -pthread")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(ZeroMQ REQUIRED)
@@ -15,20 +15,10 @@ include_directories(
     ./include/    
 )
 
-# Get the source files
-# This will also give the following variables
-# MESSAGEHUB_SRCS (Not Yet)
-# RECEIVER_SRCS   (Not Yet)
-# SENDER_SRCS     (Not Yet)
 add_subdirectory(src)
+link_directories(${CMAKE_BINARY_DIR})
+add_library(messagehub STATIC ${SRCS})
+target_link_libraries(messagehub LINK_PUBLIC ${ZeroMQ_Library} )
+add_executable(main src/main.cpp)
+target_link_libraries(main ${ZeroMQ_Library} messagehub)
 
-set(SOURCES 
-    ${MESSAGEHUB_SRCS}
-    ${RECEIVER_SRCS}
-    ${SENDER_SRCS} 
-)
-
-message("Sources: " ${SOURCES})
-# Create Executable
-add_library(MessageHub ${SOURCES})
-target_link_libraries(MessageHub ${ZeroMQ_LIBRARY})

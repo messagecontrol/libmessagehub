@@ -4,16 +4,11 @@ cmake_minimum_required(VERSION 2.8)
 # The variables need to be in the parent scope, so set the filenames
 # accordingly.
 
-set(MESSAGEHUB_SRCS
+set(SRCS
     src/messagehub.cpp
-    src/message.cpp
-    PARENT_SCOPE    
+    src/message.cpp 
+
+    PARENT_SCOPE
 )
 
-set(RECEIVER_SRCS
-    
-)
 
-set(SENDER_SRCS
-    
-)

@@ -12,6 +12,16 @@ MessageHub::MessageHub(std::string id, std::string hostip, int listenPort) : con
 }
 
 MessageHub::~MessageHub() {
+    still_send = false;
+    still_process = false;
+    still_receive = false;
+    if(msgProcessor->joinable())
+        msgProcessor->join();
+    if(sender->joinable())
+        sender->join();
+    if(receiver->joinable())
+        receiver->join();
+
 }
 
 void MessageHub::process(std::string s) {
@@ -41,7 +51,7 @@ void MessageHub::_run() {
 void MessageHub::_run_sender() {
     while (still_send) {
         if (!outQueue.empty()) {
-            outSock.connect(outQueue.front()->first);
+            outSock.connect("tcp://" + outQueue.front()->first);
             outSock.send(outQueue.front()->second);
             outQueue.pop();
             outSock.close();
@@ -62,4 +72,10 @@ void MessageHub::_run_recevier() {
 
 std::string MessageHub::fullAddr() {
     return identity + "::" + hostAddr + ":" + std::to_string(port);
+}
+
+void MessageHub::send(std::string m, std::string dst) {
+    Message msg(m);
+    msg.writeHeader(DELIMITERS_V1, "TEST2", fullAddr());
+    outQueue.push(std::make_unique<std::pair<std::string, zmq::message_t> >(std::make_pair(dst, msg.toZmqMsg())));
 }
