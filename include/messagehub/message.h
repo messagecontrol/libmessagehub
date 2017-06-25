@@ -27,7 +27,7 @@ protected:
 
 public:
     Message(std::string);
-    Message(zmq::message_t * zmsg);
+    Message(zmq::message_t &zmsg);
     zmq::message_t toZmqMsg();
     std::string toString();
     bool needResponse();

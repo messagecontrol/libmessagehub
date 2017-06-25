@@ -4,8 +4,8 @@ Message::Message(std::string s) {
     _string = s;
 }
 
-Message::Message(zmq::message_t * zmsg) {
-    std::string s = std::string(static_cast<char*>(zmsg->data()), zmsg->size());
+Message::Message(zmq::message_t & zmsg) {
+    std::string s = std::string(static_cast<char*>(zmsg.data()), zmsg.size());
     parseString(s);
 }
 
@@ -14,7 +14,7 @@ std::string Message::toString() {
            + _header.msgType + ";"
            + _header.originAddr + ";"
            + std::to_string(_header.needResponse) + ";"
-           + "END_MSG;" 
+           + "END_HEAD;" 
            + _string
            + ";END_MSG;";
 }
@@ -53,14 +53,15 @@ void Message::parseString(std::string s) {
                    _header.needResponse = std::stoi(token);
                    break;
                 case 4:
-                   assert(token == "END_HEAD");
+                   assert(std::strcmp(token.c_str(),"END_HEAD") == 0);
                    end_header = true;
                    break;
             }
         } else {
-            assert(token == "END_MSG");
+            assert(std::strcmp(token.c_str(), "END_MSG") == 0);
         }
         s.erase(0, pos + DELIMITER_SIZE);
+        iteration++;
     }
 }
 

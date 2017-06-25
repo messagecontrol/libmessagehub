@@ -2,8 +2,8 @@
 
 MessageHub::MessageHub(std::string id, std::string hostip, int listenPort) : context(1) , inSock(context, ZMQ_PULL), outSock(context, ZMQ_PUSH) {
     identity = id;
-    inQueue = std::queue<std::unique_ptr<zmq::message_t> >();
-    outQueue = std::queue<std::unique_ptr<std::pair<std::string, zmq::message_t> > >();
+    inQueue = std::queue<Message>();
+    outQueue = std::queue<std::pair<std::string, zmq::message_t> >();
     still_process = true;
     still_send = true;
     still_receive = true;
@@ -38,27 +38,39 @@ void MessageHub::run() {
 }
 
 void MessageHub::_run() {
+
     while (still_process) {
         if(!inQueue.empty()) {
             std::cout << "READING INBOX\n";
-            Message msg(inQueue.front().get());
+            //zmq::message_t zmsg;
+            //zmsg.copy(&inQueue.front()); 
+            
+            //std::string s = std::string(static_cast<char*>(inQueue.front().data()), inQueue.front().size());
+            Message msg = inQueue.front();
+            std::cout << "PROCESSING MESSAGE\n";
             process(msg.toString());
             if (msg.needResponse()) {
+                std::cout << "SENDING RESPONSE\n";
                 Message m("YOUR MESSAGE WAS ACKNOWLEDGED");
                 m.writeHeader(DELIMITERS_V1, "TEST", fullAddr()); 
-                outQueue.push(std::make_unique<std::pair<std::string, zmq::message_t> >(std::make_pair(msg.returnAddr(), m.toZmqMsg()))); 
+                outQueue.push(std::make_pair(msg.returnAddr(), m.toZmqMsg())); 
             } 
+            inQueue.pop();
         }
     }
 }
 
 void MessageHub::_run_sender() {
+    zmq::context_t ctx(1);
+    zmq::socket_t outSock(ctx, ZMQ_PUSH);
     while (still_send) {
         std::cout << ":";
         sleep(1);
         if (!outQueue.empty()) {
-            outSock.connect("tcp://" + outQueue.front()->first);
-            outSock.send(outQueue.front()->second);
+            std::cout << "Connecting to " << outQueue.front().first << " ... ";
+            outSock.connect("tcp://" + outQueue.front().first);
+            std::cout << "OK\n";
+            outSock.send(outQueue.front().second);
             outQueue.pop();
             outSock.close();
         }
@@ -66,6 +78,8 @@ void MessageHub::_run_sender() {
 }
 
 void MessageHub::_run_recevier() {
+    zmq::context_t ctx(1);
+    zmq::socket_t inSock(ctx, ZMQ_PULL);
     std::cout << "ATTEMPTING TO BIND SOCKET\n";
     inSock.bind("tcp://*:" + std::to_string(port));
     std::cout << "BINDED INSOCK\n";
@@ -74,7 +88,8 @@ void MessageHub::_run_recevier() {
         sleep(1);
         zmq::message_t msg;
         inSock.recv(&msg);
-        inQueue.push(std::unique_ptr<zmq::message_t>(&msg));
+        Message m(msg);
+        inQueue.push(m);
     }
     inSock.close();
 }
@@ -87,5 +102,5 @@ std::string MessageHub::fullAddr() {
 void MessageHub::send(std::string m, std::string dst) {
     Message msg(m);
     msg.writeHeader(DELIMITERS_V1, "TEST2", fullAddr());
-    outQueue.push(std::make_unique<std::pair<std::string, zmq::message_t> >(std::make_pair(dst, msg.toZmqMsg())));
+    outQueue.push(std::make_pair(dst, msg.toZmqMsg()));
 }

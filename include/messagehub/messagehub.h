@@ -21,8 +21,8 @@ protected:
     
     std::string identity;
     std::unique_ptr<std::thread> manager, msgProcessor, receiver, sender;
-    std::queue<std::unique_ptr<zmq::message_t> > inQueue;
-    std::queue<std::unique_ptr<std::pair<std::string, zmq::message_t> > > outQueue;
+    std::queue<Message> inQueue;
+    std::queue<std::pair<std::string, zmq::message_t> > outQueue;
     zmq::context_t context;
     zmq::socket_t inSock, outSock;
     int port;
