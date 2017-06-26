@@ -53,10 +53,12 @@ void MessageHub::_run() {
                 std::cout << "SENDING RESPONSE\n";
                 Message m("YOUR MESSAGE WAS ACKNOWLEDGED");
                 m.writeHeader(DELIMITERS_V1, "TEST", fullAddr()); 
-                std::cout << "Message put in out queue\n";
                 outQueue.push(std::make_pair(msg.returnAddr(), m.toZmqMsg())); 
+                
+                std::cout << "Message put in out queue\n";
             } 
             inQueue.pop();
+            std::cout << "Popped inQueue\n";
         }
     }
 }
@@ -65,10 +67,10 @@ void MessageHub::_run_sender() {
     zmq::context_t ctx(1);
     zmq::socket_t outSock(ctx, ZMQ_PUSH);
     while (still_send) {
-        std::cout << ":\n";
-        sleep(1);
+        //std::cout << ":\n";
+        //sleep(1);
         if (!outQueue.empty()) {
-            std::cout << "Connecting to " << outQueue.front().first << " ... ";
+            std::cout << "Connecting to " << outQueue.front().first << " ... \n";
             outSock.connect("tcp://" + outQueue.front().first);
             std::cout << "OK\n";
             outSock.send(outQueue.front().second);
