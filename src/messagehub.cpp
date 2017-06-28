@@ -67,8 +67,6 @@ void MessageHub::_run_sender() {
     zmq::context_t ctx(1);
     zmq::socket_t outSock(ctx, ZMQ_PUSH);
     while (still_send) {
-        //std::cout << ":\n";
-        //sleep(1);
         if (!outQueue.empty()) {
             std::cout << "Connecting to " << outQueue.front().first << " ... \n";
             outSock.connect("tcp://" + outQueue.front().first);
