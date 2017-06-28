@@ -16,7 +16,7 @@ All contributions are welcomed via pull requests, as long as they abide to the f
 - Unit tests and if needed integration tests must also be provided for new features. *(Currently no testing suite is being used)*
 - Small bugfixes do not have to include all the above, but the pull request should reference the issue if there is one related.
 ## Todo
-- [ ] Provide a project structure
+- [x] Provide a project structure
 - [ ] Set up doxygen or something of the likes
 - [ ] Create main documentations
 - [ ] Either use an existing testing suite or create own

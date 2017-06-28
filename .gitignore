@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+
+# Vim files
+.color_coded
+.ycm_extra_conf.py
+*.swp
+*.swo
+
+# Build directory
+build/
+
+# Compile Commands
+compile_commands.json
