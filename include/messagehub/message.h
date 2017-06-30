@@ -2,10 +2,10 @@
 #define MESSAGE_H
 
 #include <string>
-// TODO: Remove assertions and add exceptions
-#include <cassert>
 // TODO: Use a logging module to log messages
 #include <zmq.hpp>
+
+#include "messagehub/exceptions.h"
 
 // This is the delimiter used in the message
 // TODO: Import this from a config file
