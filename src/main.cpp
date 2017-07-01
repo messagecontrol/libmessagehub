@@ -10,6 +10,7 @@
 
 int main(int argc, char ** argv) {
     if (argc != 3){
+        std::cout << "[Error] Usage: ./main [HOST_IP] [REMOTE_IP]\n";
         return EXIT_FAILURE;
     }
     char hostname[HOST_NAME_MAX];
@@ -18,11 +19,7 @@ int main(int argc, char ** argv) {
     MessageHub hub(hostname, argv[1], 5555);
     std::cout << "initialized hub\n";
     hub.run();
-    sleep(3);
-    while (true) {
-        hub.send("HELLO", argv[2]);
-        std::cout << "sent msg\n";
-        sleep(3);
-    }
+    hub.connect(argv[2], "Raspi");
+    while (true) {}
     return EXIT_SUCCESS;
 }

@@ -122,7 +122,7 @@ bool MessageHub::handshake(std::string ip, int port) {
     bool connected = false;
     send("HANDSHAKE", ip  + ":"+ std::to_string(port));
     bool timeout = false;
-    std::thread timer(&MessageHub::_timer, this, 9, &timeout);
+    std::thread timer(&MessageHub::_timer, this, 15, &timeout);
     timer.detach();
     while (waitingOnShake && !timeout) {}
     connected = !waitingOnShake;
