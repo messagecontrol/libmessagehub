@@ -60,6 +60,7 @@ public:
     // TODO: Need a getter and setter for the underlying message
     //       It hasn't been implemented yet because there is a possibility of
     //       introducing size constraints in the message specification.
+    std::string getMsg();
 };
 
 

@@ -89,3 +89,7 @@ void Message::writeHeader(int delimiters, std::string msg_type, std::string full
     _header.originAddr = full_addr;
     _header.needResponse = need_response;
 }
+
+std::string Message::getMsg() {
+    return _string;
+}

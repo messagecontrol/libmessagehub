@@ -4,10 +4,11 @@
 // TODO: We probably don't need to import all of these ... they were there
 //       since planning and learning
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 #include <vector>
 #include <queue>
+#include <map>
 #include <string>
 #include <thread>
 #include <memory>
@@ -71,9 +72,19 @@ protected:
 
     // TODO: Need to removed or allow custom processor
     void process(std::string s);
+    void process(Message &msg);
+    // The map will be in the format of:
+    //      "IP ADDRESS:POST": ("HOSTNAME", Bool for active or not)
+    std::map<std::string, std::pair<std::string, bool> > connections;
+    void addConnection(const std::string & ipaddr, const int port, const std::string & name);
+    void addConnection(const std::string & ipaddrWithPort, const std::string & name);
+
+    bool waitingOnShake;
+    void _timer(int time, bool *flag);
+    bool handshake(std::string ip, int port);
 
 public:
-    
+
     MessageHub(std::string id, std::string hostip, int listenPort = DEFAULT_PORT);
     ~MessageHub();
 
@@ -87,7 +98,9 @@ public:
 
     // Allow messages to be sent without a message received with a response
     // required
-    void send(std::string msg, std::string dst);
+    void send(const std::string msg, const std::string dst);
+
+    bool connect(const std::string &ipaddr, const int &port, const std::string &name);
 };
 
 #endif

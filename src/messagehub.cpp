@@ -9,6 +9,7 @@ MessageHub::MessageHub(std::string id, std::string hostip, int listenPort) : con
     still_receive = true;
     port = listenPort;
     hostAddr = hostip;
+    waitingOnShake = true;
 }
 
 MessageHub::~MessageHub() {
@@ -26,6 +27,17 @@ MessageHub::~MessageHub() {
 
 void MessageHub::process(std::string s) {
     std::cout << s << "\n";
+}
+
+void MessageHub::process(Message &msg) {
+    if (std::strcmp(msg.getMsg().c_str(), "HANDSHAKE")) {
+        std::cout << "[INFO] Recevied handshake request\n";
+        send("SHAKEHAND", msg.returnAddr());
+    } else if (std::strcmp(msg.getMsg().c_str(), "SHAKEHAND")) {
+        waitingOnShake = false;
+    } else {
+        process(msg.getMsg());
+    }
 }
 
 void MessageHub::run() {
@@ -48,7 +60,7 @@ void MessageHub::_run() {
             //std::string s = std::string(static_cast<char*>(inQueue.front().data()), inQueue.front().size());
             Message msg = inQueue.front();
             std::cout << "PROCESSING MESSAGE\n";
-            process(msg.toString());
+            process(msg);
             if (msg.needResponse()) {
                 std::cout << "SENDING RESPONSE\n";
                 Message m("YOUR MESSAGE WAS ACKNOWLEDGED");
@@ -73,7 +85,7 @@ void MessageHub::_run_sender() {
             std::cout << "OK\n";
             outSock.send(outQueue.front().second);
             outQueue.pop();
-            //outSock.close();
+            outSock.close();
         }
     }
 }
@@ -104,4 +116,44 @@ void MessageHub::send(std::string m, std::string dst) {
     Message msg(m);
     msg.writeHeader(DELIMITERS_V1, "TEST2", fullAddr(), true);
     outQueue.push(std::make_pair(dst, msg.toZmqMsg()));
+}
+
+bool MessageHub::handshake(std::string ip, int port) {
+    bool connected = false;
+    send("HANDSHAKE", ip  + ":"+ std::to_string(port));
+    bool timeout = false;
+    std::thread timer(&MessageHub::_timer, this, 9, &timeout);
+    timer.detach();
+    while (waitingOnShake && !timeout) {}
+    connected = !waitingOnShake;
+    waitingOnShake = true;
+    if (timeout) std::cout << "[ERROR] Handshake timed out\n";
+    return connected;
+}
+
+
+void MessageHub::_timer(int time, bool * flag) {
+    sleep(time);
+    *flag = true;
+}
+
+void MessageHub::addConnection(const std::string & ipaddr, const int port, const std::string & name) {
+    std::string s = ipaddr + ":" + std::to_string(port);
+    addConnection(s, name);
+}
+
+void MessageHub::addConnection(const std::string & ipaddr, const std::string & name) {
+    connections.insert(std::make_pair(ipaddr, std::make_pair(name, true)));
+    std::cout << "[INFO] Added connection: " + ipaddr + "\n";
+}
+
+bool MessageHub::connect(const std::string &ipaddr, const int &port, const std::string &name) {
+    if (handshake(ipaddr, port)) {
+        std::cout << "[INFO] Successfully connected to " + name + "\n";
+        addConnection(ipaddr, port, name);
+        return true;
+    } else {
+        std::cout << "[ERROR] Connection timeout for " + name + "\n";
+        return false;
+    }
 }
