@@ -52,13 +52,13 @@ void Message::parseString(std::string s) {
                    _header.needResponse = std::stoi(token);
                    break;
                 case 4:
-                   if (std::strcmp(token.c_str(),"END_HEAD") == 0)
+                   if (std::strcmp(token.c_str(),"END_HEAD") != 0)
                        throw MessageFormatException("Expected \"END_HEAD\"", s);
                    end_header = true;
                    break;
             }
         } else {
-            if (std::strcmp(token.c_str(), "END_MSG") == 0) {
+            if (std::strcmp(token.c_str(), "END_MSG") != 0) {
                 throw MessageFormatException("Expected \"END_MSG\"", s);
             }
         }
