@@ -30,10 +30,10 @@ void MessageHub::process(std::string s) {
 }
 
 void MessageHub::process(Message &msg) {
-    if (std::strcmp(msg.getMsg().c_str(), "HANDSHAKE")) {
+    if (std::strcmp(msg.getMsg().c_str(), "HANDSHAKE") == 0) {
         std::cout << "[INFO] Recevied handshake request\n";
         send("SHAKEHAND", msg.returnAddr());
-    } else if (std::strcmp(msg.getMsg().c_str(), "SHAKEHAND")) {
+    } else if (std::strcmp(msg.getMsg().c_str(), "SHAKEHAND") == 0) {
         waitingOnShake = false;
     } else {
         process(msg.getMsg());
