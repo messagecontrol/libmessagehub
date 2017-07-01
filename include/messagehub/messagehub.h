@@ -101,6 +101,7 @@ public:
     void send(const std::string msg, const std::string dst);
 
     bool connect(const std::string &ipaddr, const int &port, const std::string &name);
+    bool connect(const std::string &ipaddrWithPort, const std::string &name);
 };
 
 #endif

@@ -147,10 +147,16 @@ void MessageHub::addConnection(const std::string & ipaddr, const std::string & n
     std::cout << "[INFO] Added connection: " + ipaddr + "\n";
 }
 
+
 bool MessageHub::connect(const std::string &ipaddr, const int &port, const std::string &name) {
+    std::string s = ipaddr + ":" + std::to_string(port);
+    return connect(s, name);
+}
+
+bool MessageHub::connect(const std::string &ipaddr, const std::string &name) {
     if (handshake(ipaddr, port)) {
         std::cout << "[INFO] Successfully connected to " + name + "\n";
-        addConnection(ipaddr, port, name);
+        addConnection(ipaddr, name);
         return true;
     } else {
         std::cout << "[ERROR] Connection timeout for " + name + "\n";
