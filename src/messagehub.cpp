@@ -85,7 +85,6 @@ void MessageHub::_run_sender() {
             std::cout << "OK\n";
             outSock.send(outQueue.front().second);
             outQueue.pop();
-            outSock.close();
         }
     }
 }
