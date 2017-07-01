@@ -81,7 +81,7 @@ protected:
 
     bool waitingOnShake;
     void _timer(int time, bool *flag);
-    bool handshake(std::string ip, int port);
+    bool handshake(std::string addr);
 
 public:
 

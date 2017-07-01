@@ -115,12 +115,13 @@ std::string MessageHub::fullAddr() {
 void MessageHub::send(std::string m, std::string dst) {
     Message msg(m);
     msg.writeHeader(DELIMITERS_V1, "TEST2", fullAddr(), true);
+    std::cout << "Pushing to outQueue: <" + dst + ", " + m + ">\n";
     outQueue.push(std::make_pair(dst, msg.toZmqMsg()));
 }
 
-bool MessageHub::handshake(std::string ip, int port) {
+bool MessageHub::handshake(std::string ip) {
     bool connected = false;
-    send("HANDSHAKE", ip  + ":"+ std::to_string(port));
+    send("HANDSHAKE", ip);
     bool timeout = false;
     std::thread timer(&MessageHub::_timer, this, 15, &timeout);
     timer.detach();
@@ -154,7 +155,7 @@ bool MessageHub::connect(const std::string &ipaddr, const int &port, const std::
 }
 
 bool MessageHub::connect(const std::string &ipaddr, const std::string &name) {
-    if (handshake(ipaddr, port)) {
+    if (handshake(ipaddr)) {
         std::cout << "[INFO] Successfully connected to " + name + "\n";
         addConnection(ipaddr, name);
         return true;
