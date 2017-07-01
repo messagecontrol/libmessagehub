@@ -19,6 +19,7 @@ int main(int argc, char ** argv) {
     MessageHub hub(hostname, argv[1], 5555);
     std::cout << "initialized hub\n";
     hub.run();
+    sleep(3);
     hub.connect(argv[2], "Raspi");
     while (true) {}
     return EXIT_SUCCESS;
