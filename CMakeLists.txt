@@ -11,8 +11,13 @@ find_package(ZeroMQ REQUIRED)
 
 # Set the include directory
 
+execute_process(COMMAND git submodule update --init --recursive
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+
 include_directories(
     ./include/    
+    ${CMAKE_CURRENT_BINARY_DIR}/vendor/rapidjson/include/
 )
 
 add_subdirectory(src)
