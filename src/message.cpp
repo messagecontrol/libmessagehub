@@ -10,7 +10,7 @@ JSONMessage::JSONMessage(zmq::message_t &zmsg): handler(std::shared_ptr<JSONMess
 } 
 
 JSONMessage JSONMessage::empty() {
-    return JSONMessage("{header: {}, body:{}}");
+    return JSONMessage("{\"header\": {}, \"body\":{}}");
 }
 
 void JSONMessage::parseString(const std::string & s) {
