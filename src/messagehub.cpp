@@ -76,8 +76,19 @@ void MessageControl::_run_sender() {
     zmq::socket_t outSock(ctx, ZMQ_PUSH);
     while (still_send) {
         if (!outQueue.empty()) {
+            log->debug("Connecting to {}", outQueue.front().first);
             outSock.connect("tcp://" + outQueue.front().first);
-            outSock.send(outQueue.front().second.toZmqMsg());
+            log->debug("About to send: {}", outQueue.front().second->toString());
+            std::string s = outQueue.front().second->toString();
+            zmq::message_t zmsg(s.size());
+            std::copy(s.begin(), s.end(), static_cast<char *>(zmsg.data()));
+            try {
+                outSock.send(zmsg);
+            } catch (const zmq::error_t e) {
+                log->error("Send Failed");
+                log->error(e.what());
+            }
+            log->debug("Sent");
             outQueue.pop();
         }
     }
@@ -93,6 +104,7 @@ void MessageControl::_run_receiver() {
     while (still_receive) {
         zmq::poll(&items[0], 1, 10);
             if (items[0].revents & ZMQ_POLLIN) {    
+                log->debug("RECEIVING");
             zmq::message_t msg;
             inSock.recv(&msg);
             JSONMessage m(msg);
@@ -103,7 +115,7 @@ void MessageControl::_run_receiver() {
                 msg.setHeader("type", "SHAKEHAND");
                 send(msg, msg.getFromHeader("returnAddr"));  
             } else
-                inQueue.push(m);
+                inQueue.push(std::make_shared<JSONMessage>(m));
         }
     }
     inSock.close();
@@ -114,7 +126,7 @@ void MessageControl::_run_receiver() {
 
 void MessageControl::send(JSONMessage &m, const std::string &dst) {
     m.setHeader("returnAddr", returnAddr);
-    outQueue.push(std::make_pair(dst, m));
+    outQueue.push(std::make_pair(dst, std::make_shared<JSONMessage>(m)));
 }
 
 bool MessageControl::handshake(const std::string &ip) {
@@ -123,12 +135,14 @@ bool MessageControl::handshake(const std::string &ip) {
     msg.setHeader("type", "HANDSHAKE");
     send(msg, ip);
     bool timeout = false;
-    std::thread timer(&MessageControl::_timer, this, 15, &timeout);
+    std::thread timer(&MessageControl::_timer, this, 5, &timeout);
     timer.detach();
     while (waitingOnShake && !timeout) {}
+    log->debug("Checking in waitingOnShake");
+    log->debug(waitingOnShake);
     connected = !waitingOnShake;
     waitingOnShake = true;
-    if (timeout) std::cout << "[ERROR] Handshake timed out\n";
+    log->debug("leaving");
     return connected;
 }
 
@@ -154,12 +168,15 @@ bool MessageControl::connect(const std::string &ipaddr, const int &port, const s
 }
 
 bool MessageControl::connect(const std::string &ipaddr, const std::string &name) {
+    log->debug("Initiating handshake with {}", ipaddr);
+    bool success = handshake(ipaddr);
     if (handshake(ipaddr)) {
+        std::cout << "About to log\n";
         log->info("Successfully connected to {}", name);
         addConnection(ipaddr, name);
         return true;
     } else {
-        std::cout << "[ERROR] Connection timeout for " + name + "\n";
+        log->error("Connection timeout for {}", name);
         return false;
     }
 }
@@ -167,19 +184,19 @@ bool MessageControl::connect(const std::string &ipaddr, const std::string &name)
 MessageControl::MessageControl(const std::string &name, const std::string &ipaddr, const int &bindingPort) {
     identity = name;
     port = bindingPort;
-    returnAddr = ipaddr + std::to_string(port);
+    returnAddr = ipaddr + ":" + std::to_string(port);
     initializeLog();
     still_send = true;
     still_manage = true;
     still_receive = true;
-    waitingOnShake = false;
-    inQueue = std::queue<JSONMessage>();
-    outQueue = std::queue<std::pair<std::string, const JSONMessage> >();
+    waitingOnShake = true;
+    inQueue = std::queue<std::shared_ptr<JSONMessage> >();
+    outQueue = std::queue<std::pair<std::string, std::shared_ptr<JSONMessage> > >();
     run();
     // FIXME: sleep is required to let the threads to start
     // If not fix is found then this can be left as is because in theory its initialized once
     // per program 
-    //std::this_thread::sleep_for(std::chrono::milliseconds(0));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 }
 
 
@@ -192,7 +209,7 @@ void MessageControl::initializeLog() {
         color_console_sink = std::make_shared<spdlog::sinks::ansicolor_stdout_sink_mt>();
         //log_sinks.push_back(file_error_sink);
         log_sinks.push_back(color_console_sink);
-        log = std::make_shared<spdlog::async_logger>("MessageControl", std::begin(log_sinks), std::end(log_sinks), 4096);
+        log = std::make_shared<spdlog::logger>("MessageControl", std::begin(log_sinks), std::end(log_sinks));//, 4096);
         // This is where the log level is set
         log->set_level(spdlog::level::trace);
         spdlog::register_logger(log);

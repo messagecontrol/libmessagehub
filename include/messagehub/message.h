@@ -18,7 +18,7 @@
 #include "rapidjson/reader.h"
 #include "messagehub/exceptions.h"
 
-
+class Handler;
 class BaseMessage {
     protected:
         virtual void parseString(const std::string &s) = 0;
@@ -34,9 +34,36 @@ class BaseMessage {
 
 
 class JSONMessage: public BaseMessage {
+    
+    friend class Handler;
     protected:
         void parseString(const std::string & s);
         std::map<std::string, std::string> header, body;
+        std::shared_ptr<Handler> handler;
+        std::string currentKey;
+        bool editingHeader;
+        void set(const std::string &val);
+ 
+    public:
+        JSONMessage(const std::string &s);
+        JSONMessage(zmq::message_t &zmsg);
+        JSONMessage(const JSONMessage &msg);
+
+        static JSONMessage empty();
+        zmq::message_t toZmqMsg() const;
+        std::string toString() const;
+        std::string returnAddr() const;
+        int getPriority() const;
+
+        // These getters will raise std::out_of_range if key doesn't exist
+        std::string getFromHeader(const std::string &s) const;
+
+        std::string getFromBody(const std::string &s) const;
+
+        void setHeader(const std::string &key, const std::string &val);
+        void setBody(const std::string &key, const std::string &val); 
+};
+
         class Handler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Handler> {
             public:
                 Handler(std::shared_ptr<JSONMessage> parent) {msg = parent;}
@@ -74,29 +101,4 @@ class JSONMessage: public BaseMessage {
                 bool StartArray() {return true;}
                 bool EndArray(rapidjson::SizeType elementCount) {return true;}
         };
-        Handler handler;
-        std::string currentKey;
-        bool editingHeader;
-        void set(const std::string &val);
- 
-    public:
-        JSONMessage(const std::string &s);
-        JSONMessage(zmq::message_t &zmsg);
-
-        static JSONMessage empty();
-        zmq::message_t toZmqMsg() const;
-
-        std::string toString() const;
-        std::string returnAddr() const;
-        int getPriority() const;
-
-        // These getters will raise std::out_of_range if key doesn't exist
-        std::string getFromHeader(const std::string &s) const;
-
-        std::string getFromBody(const std::string &s) const;
-
-        void setHeader(const std::string &key, const std::string &val);
-        void setBody(const std::string &key, const std::string &val); 
-};
-
 #endif

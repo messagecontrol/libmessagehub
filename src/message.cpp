@@ -1,10 +1,10 @@
 #include "messagehub/message.h"
 
-JSONMessage::JSONMessage(const std::string &s): handler(std::shared_ptr<JSONMessage>(this)) {
+JSONMessage::JSONMessage(const std::string &s): handler(std::make_shared<Handler>(std::shared_ptr<JSONMessage>(this))) {
     parseString(s);
 }
 
-JSONMessage::JSONMessage(zmq::message_t &zmsg): handler(std::shared_ptr<JSONMessage>(this)) {
+JSONMessage::JSONMessage(zmq::message_t &zmsg): handler(std::make_shared<Handler>(std::shared_ptr<JSONMessage>(this))) {
     std::string s = std::string(static_cast<char*>(zmsg.data()), zmsg.size());
     parseString(s);
 } 
@@ -27,7 +27,7 @@ void JSONMessage::parseString(const std::string & s) {
         throw MessageFormatException("Message is missing an body", s);
     if (!msg["body"].IsObject())
         throw MessageFormatException("Message's body is not an object", s); 
-    msg.Accept(handler);
+    msg.Accept(*handler);
 }
 
 zmq::message_t JSONMessage::toZmqMsg() const {
@@ -93,6 +93,18 @@ void JSONMessage::setBody(const std::string &key, const std::string &val) {
 int JSONMessage::getPriority() const {
     return 1;
 }
- std::string JSONMessage::returnAddr() const {
-     return getFromHeader("returnAddr");
- }
+
+std::string JSONMessage::returnAddr() const {
+    return getFromHeader("returnAddr");
+}
+
+
+JSONMessage::JSONMessage(const JSONMessage& msg) {
+    std::cout << "COPYING message\n";
+    header = msg.header;
+    body = msg.body;
+    handler = msg.handler;
+    currentKey = msg.currentKey;
+    editingHeader = msg.editingHeader;
+}
+

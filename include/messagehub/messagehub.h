@@ -41,12 +41,12 @@ class MessageControl {
 
         std::unique_ptr<std::thread> manager, receiver, sender;
 
-        std::queue<JSONMessage> inQueue;
+        std::queue<std::shared_ptr<JSONMessage> > inQueue;
 
-        std::queue<std::pair<std::string, const JSONMessage> > outQueue;
+        std::queue<std::pair<std::string, std::shared_ptr<JSONMessage> > > outQueue;
 
         std::map<std::string, std::pair<std::string, bool> > connections;
-        std::shared_ptr<spdlog::async_logger> log;
+        std::shared_ptr<spdlog::logger> log;
         std::vector<spdlog::sink_ptr> log_sinks;
         std::shared_ptr<spdlog::sinks::sink> file_error_sink;
         std::shared_ptr<spdlog::sinks::ansicolor_sink<std::mutex> > color_console_sink;

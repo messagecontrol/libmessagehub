@@ -18,7 +18,7 @@ int main(int argc, char ** argv) {
     MessageControl msgctl(hostname, argv[1], 5555);
     if (argc > 2)
         for (int i = 2; i < argc; i++)
-            msgctl.connect(argv[i], std::to_string(i));
+            msgctl.connect(argv[i], 5555, std::to_string(i));
     while (true) {}
     return EXIT_SUCCESS;
 }
