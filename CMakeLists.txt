@@ -14,10 +14,13 @@ find_package(ZeroMQ REQUIRED)
 execute_process(COMMAND git submodule update --init --recursive
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-
+# These are the include directories
+# The vendor directories are hard coded because they will always
+# be created those directories, no matter the build location
 include_directories(
     ./include/    
-    ${CMAKE_CURRENT_BINARY_DIR}/vendor/rapidjson/include/
+    ./build/vendor/rapidjson/include/
+    ./build/vendor/spdlog/include/
 )
 
 add_subdirectory(src)
@@ -27,3 +30,9 @@ target_link_libraries(messagehub LINK_PUBLIC ${ZeroMQ_Library} )
 add_executable(main src/main.cpp)
 target_link_libraries(main ${ZeroMQ_Library} messagehub)
 
+install(TARGETS messagehub DESTINATION /usr/local/lib/messagehub)
+install(DIRECTORY ./include/messagehub/ DESTINATION /usr/local/include)
+      
+add_custom_target(uninstall 
+                  COMMAND xargs rm < ${CMAKE_CURRENT_BINARY_DIR}/install_manifest.txt
+                  COMMENT "Uninstalling MessageHub")

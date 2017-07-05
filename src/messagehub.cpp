@@ -1,30 +1,19 @@
 #include "messagehub/messagehub.h"
 
-MessageHub::MessageHub(std::string id, std::string hostip, int listenPort) : context(1) , inSock(context, ZMQ_PULL), outSock(context, ZMQ_PUSH) {
-    identity = id;
-    inQueue = std::queue<Message>();
-    outQueue = std::queue<std::pair<std::string, zmq::message_t> >();
-    still_process = true;
-    still_send = true;
-    still_receive = true;
-    port = listenPort;
-    hostAddr = hostip;
-    waitingOnShake = true;
-}
 
-MessageHub::~MessageHub() {
+MessageControl::~MessageControl() {
+    spdlog::drop_all();
     still_send = false;
-    still_process = false;
+    still_manage = false;
     still_receive = false;
-    if(msgProcessor->joinable())
-        msgProcessor->join();
+    if(manager->joinable())
+        manager->join();
     if(sender->joinable())
         sender->join();
     if(receiver->joinable())
         receiver->join();
-
 }
-
+/*
 void MessageHub::process(std::string s) {
     std::cout << s << "\n";
 }
@@ -38,18 +27,16 @@ void MessageHub::process(Message &msg) {
     } else {
         process(msg.getMsg());
     }
-}
+}*/
 
-void MessageHub::run() {
-    msgProcessor = std::make_unique<std::thread>(std::thread(&MessageHub::_run, this));
-    std::cout << "MSGPROCESSOR INITIALIZED\n";
-    receiver = std::make_unique<std::thread>(std::thread(&MessageHub::_run_recevier, this));
-    std::cout << "RECEIVER INITIALIZED\n";
-    sender = std::make_unique<std::thread>(std::thread(&MessageHub::_run_sender, this));
-    std::cout << "SENDER INITIALIZED\n";
+void MessageControl::run() {
+    log->info("Initializing Threads");
+    manager = std::make_unique<std::thread>(std::thread(&MessageControl::_run_manager, this));
+    receiver = std::make_unique<std::thread>(std::thread(&MessageControl::_run_receiver, this));
+    sender = std::make_unique<std::thread>(std::thread(&MessageControl::_run_sender, this));
 }
-
-void MessageHub::_run() {
+/*
+void _run() {
 
     while (still_process) {
         if(!inQueue.empty()) {
@@ -73,56 +60,70 @@ void MessageHub::_run() {
             std::cout << "Popped inQueue\n";
         }
     }
+}*/
+
+void MessageControl::_run_manager() {
+    log->debug("Started manager");
+    while (still_manage) {
+    
+    }
+    log->debug("Manager ended");
 }
 
-void MessageHub::_run_sender() {
+void MessageControl::_run_sender() {
+    log->debug("Started sender");
     zmq::context_t ctx(1);
     zmq::socket_t outSock(ctx, ZMQ_PUSH);
     while (still_send) {
         if (!outQueue.empty()) {
-            std::cout << "Connecting to " << outQueue.front().first << " ... \n";
             outSock.connect("tcp://" + outQueue.front().first);
-            std::cout << "OK\n";
-            outSock.send(outQueue.front().second);
+            outSock.send(outQueue.front().second.toZmqMsg());
             outQueue.pop();
         }
     }
+    log->debug("Sender ended");
 }
 
-void MessageHub::_run_recevier() {
+void MessageControl::_run_receiver() {
+    log->info("Started recevier");
     zmq::context_t ctx(1);
     zmq::socket_t inSock(ctx, ZMQ_PULL);
-    std::cout << "ATTEMPTING TO BIND SOCKET\n";
+    zmq::pollitem_t items[] = {{inSock, 0, ZMQ_POLLIN, 0}};
     inSock.bind("tcp://*:" + std::to_string(port));
-    std::cout << "BINDED INSOCK\n";
     while (still_receive) {
-        std::cout << "0";
-        sleep(1);
-        zmq::message_t msg;
-        inSock.recv(&msg);
-        Message m(msg);
-        inQueue.push(m);
+        zmq::poll(&items[0], 1, 10);
+            if (items[0].revents & ZMQ_POLLIN) {    
+            zmq::message_t msg;
+            inSock.recv(&msg);
+            JSONMessage m(msg);
+            if (m.getFromHeader("type") == std::string("SHAKEHAND"))
+                waitingOnShake = false;
+            else if (m.getFromHeader("type") == std::string("HANDSHAKE")) {
+                JSONMessage msg = JSONMessage::empty();
+                msg.setHeader("type", "SHAKEHAND");
+                send(msg, msg.getFromHeader("returnAddr"));  
+            } else
+                inQueue.push(m);
+        }
     }
     inSock.close();
+    log->debug("Receiver stopped");
 }
 
 
-std::string MessageHub::fullAddr() {
-    return identity + "::" + hostAddr + ":" + std::to_string(port);
+
+void MessageControl::send(JSONMessage &m, const std::string &dst) {
+    m.setHeader("returnAddr", returnAddr);
+    outQueue.push(std::make_pair(dst, m));
 }
 
-void MessageHub::send(std::string m, std::string dst) {
-    Message msg(m);
-    msg.writeHeader(DELIMITERS_V1, "TEST2", fullAddr(), true);
-    std::cout << "Pushing to outQueue: <" + dst + ", " + m + ">\n";
-    outQueue.push(std::make_pair(dst, msg.toZmqMsg()));
-}
-
-bool MessageHub::handshake(std::string ip) {
+bool MessageControl::handshake(const std::string &ip) {
     bool connected = false;
-    send("HANDSHAKE", ip);
+    JSONMessage msg = JSONMessage::empty();
+    msg.setHeader("type", "HANDSHAKE");
+    send(msg, ip);
     bool timeout = false;
-    std::thread timer(&MessageHub::_timer, this, 15, &timeout);
+    std::thread timer(&MessageControl::_timer, this, 15, &timeout);
     timer.detach();
     while (waitingOnShake && !timeout) {}
     connected = !waitingOnShake;
@@ -132,34 +133,75 @@ bool MessageHub::handshake(std::string ip) {
 }
 
 
-void MessageHub::_timer(int time, bool * flag) {
+void MessageControl::_timer(int time, bool * flag) {
     sleep(time);
     *flag = true;
 }
 
-void MessageHub::addConnection(const std::string & ipaddr, const int port, const std::string & name) {
+void MessageControl::addConnection(const std::string & ipaddr, const int &port, const std::string & name) {
     std::string s = ipaddr + ":" + std::to_string(port);
     addConnection(s, name);
 }
 
-void MessageHub::addConnection(const std::string & ipaddr, const std::string & name) {
+void MessageControl::addConnection(const std::string & ipaddr, const std::string & name) {
     connections.insert(std::make_pair(ipaddr, std::make_pair(name, true)));
-    std::cout << "[INFO] Added connection: " + ipaddr + "\n";
 }
 
 
-bool MessageHub::connect(const std::string &ipaddr, const int &port, const std::string &name) {
+bool MessageControl::connect(const std::string &ipaddr, const int &port, const std::string &name) {
     std::string s = ipaddr + ":" + std::to_string(port);
     return connect(s, name);
 }
 
-bool MessageHub::connect(const std::string &ipaddr, const std::string &name) {
+bool MessageControl::connect(const std::string &ipaddr, const std::string &name) {
     if (handshake(ipaddr)) {
-        std::cout << "[INFO] Successfully connected to " + name + "\n";
+        log->info("Successfully connected to {}", name);
         addConnection(ipaddr, name);
         return true;
     } else {
         std::cout << "[ERROR] Connection timeout for " + name + "\n";
         return false;
     }
+}
+
+MessageControl::MessageControl(const std::string &name, const std::string &ipaddr, const int &bindingPort) {
+    identity = name;
+    port = bindingPort;
+    returnAddr = ipaddr + std::to_string(port);
+    initializeLog();
+    still_send = true;
+    still_manage = true;
+    still_receive = true;
+    waitingOnShake = false;
+    inQueue = std::queue<JSONMessage>();
+    outQueue = std::queue<std::pair<std::string, const JSONMessage> >();
+    run();
+    // FIXME: sleep is required to let the threads to start
+    // If not fix is found then this can be left as is because in theory its initialized once
+    // per program 
+    //std::this_thread::sleep_for(std::chrono::milliseconds(0));
+}
+
+
+void MessageControl::initializeLog() {
+    try {
+        log_sinks = std::vector<spdlog::sink_ptr>();
+        // The following requires the file to exist
+        // file_error_sink = std::make_shared<spdlog::sinks::simple_file_sink_mt>("logs/messagecontrol.log");
+        std::shared_ptr<spdlog::sinks::stdout_sink_mt> stdout_sink = spdlog::sinks::stdout_sink_mt::instance();
+        color_console_sink = std::make_shared<spdlog::sinks::ansicolor_stdout_sink_mt>();
+        //log_sinks.push_back(file_error_sink);
+        log_sinks.push_back(color_console_sink);
+        log = std::make_shared<spdlog::async_logger>("MessageControl", std::begin(log_sinks), std::end(log_sinks), 4096);
+        // This is where the log level is set
+        log->set_level(spdlog::level::trace);
+        spdlog::register_logger(log);
+    } catch (const spdlog::spdlog_ex& e) {
+        std::cerr << "[ERROR] Log was not initialized\n";
+        std::cerr << "[ERROR] " << e.what() << "\n";
+    }
+}
+
+std::string MessageControl::getAddr() {
+    return returnAddr + std::to_string(port);
 }

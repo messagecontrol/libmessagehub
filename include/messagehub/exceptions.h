@@ -43,5 +43,25 @@ class ConfigurationException: public MsgHubException {
     // TODO: Need to implement this probably after the ability to configure settings has been implemented
 };
 
+class KeyDoesNotExistException: public MsgHubException {
+    protected:
+        std::string _key, _mapName;
+    public:
+        inline explicit KeyDoesNotExistException(const std::string &s, const std::string &key = "[UNSET]", const std::string &mapName = "[UNSET]"): MsgHubException(s), _key(key), _mapName(mapName) {}
+        inline explicit KeyDoesNotExistException(const char * m, const char * key= "[UNSET]", const char * mapName="[UNSET]"): MsgHubException(m), _key(key), _mapName(mapName) {}
+
+        virtual const char * what() const throw() {
+            if (std::strcmp(_key.c_str(), "[UNSET]") == 0) {
+                return _msg.c_str();
+            } else if (std::strcmp(_mapName.c_str(), "[UNSET]") == 0) {
+                std::string msg = _msg + " Key: " + _key;
+                return msg.c_str();
+            } else {
+                std::string msg = _msg + " Key: " + _key + " in Map: " + _mapName;
+                return msg.c_str();
+            }
+        }
+};
+
 #endif
 

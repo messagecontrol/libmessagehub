@@ -1,95 +1,98 @@
 #include "messagehub/message.h"
 
-Message::Message(std::string s) {
-    _string = s;
-}
-
-Message::Message(zmq::message_t & zmsg) {
-    std::string s = std::string(static_cast<char*>(zmsg.data()), zmsg.size());
+JSONMessage::JSONMessage(const std::string &s): handler(std::shared_ptr<JSONMessage>(this)) {
     parseString(s);
 }
 
-std::string Message::toString() {
-    return std::to_string(_header.delimiters) + ";"
-           + _header.msgType + ";"
-           + _header.originAddr + ";"
-           + std::to_string(_header.needResponse) + ";"
-           + "END_HEAD;" 
-           + _string
-           + ";END_MSG;";
+JSONMessage::JSONMessage(zmq::message_t &zmsg): handler(std::shared_ptr<JSONMessage>(this)) {
+    std::string s = std::string(static_cast<char*>(zmsg.data()), zmsg.size());
+    parseString(s);
+} 
+
+JSONMessage JSONMessage::empty() {
+    return JSONMessage("{header: {}, body:{}}");
 }
 
-zmq::message_t Message::toZmqMsg() {
+void JSONMessage::parseString(const std::string & s) {
+    rapidjson::Document msg;
+    msg.Parse(s);
+    // Some message requirements
+    if (!msg.IsObject()) 
+        throw MessageFormatException("Message JSON is not an object");
+    if (!msg.HasMember("header"))
+        throw MessageFormatException("Message is missing header", s);  
+    if (!msg["header"].IsObject())
+        throw MessageFormatException("Message's header is not an object", s);
+    if (!msg.HasMember("body"))
+        throw MessageFormatException("Message is missing an body", s);
+    if (!msg["body"].IsObject())
+        throw MessageFormatException("Message's body is not an object", s); 
+    msg.Accept(handler);
+}
+
+zmq::message_t JSONMessage::toZmqMsg() const {
     const std::string s = toString();
     zmq::message_t msg(s.size());
     std::copy(s.begin(), s.end(), static_cast<char *>(msg.data()));
     return msg;
 }
 
-void Message::parseString(std::string s) {
-    size_t pos = 0;
-    std::string token;
-    bool end_header = false;
-    bool end_msg = true;
-    int iteration = 0;
-    while ((pos = s.find(DELIMITER)) != std::string::npos) {
-        token = s.substr(0, pos);
-        if (end_header && end_msg) {
-            _string = token;
-            end_msg = false;
-        } else if (!end_header) {
-            switch (iteration) {
-                case 0:
-                   _header.delimiters = std::stoi(token);
-                   break;
-                case 1:
-                   _header.msgType = token;
-                   break;
-                case 2:
-                   _header.originAddr = token;
-                   break;
-                case 3:
-                   _header.needResponse = std::stoi(token);
-                   break;
-                case 4:
-                   if (std::strcmp(token.c_str(),"END_HEAD") != 0)
-                       throw MessageFormatException("Expected \"END_HEAD\"", s);
-                   end_header = true;
-                   break;
-            }
-        } else {
-            if (std::strcmp(token.c_str(), "END_MSG") != 0) {
-                throw MessageFormatException("Expected \"END_MSG\"", s);
-            }
-        }
-        s.erase(0, pos + DELIMITER_SIZE);
-        iteration++;
+std::string JSONMessage::toString() const {
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    writer.StartObject();
+    writer.Key("header");
+    writer.StartObject();
+    for (std::pair<std::string, std::string> const elem : header) {
+        writer.Key(elem.first.c_str());
+        writer.String(elem.second);
+    }
+    writer.EndObject();
+    writer.Key("body");
+    writer.StartObject();
+    for (std::pair<std::string, std::string> const elem : body) {
+        writer.Key(elem.first.c_str());
+        writer.String(elem.second);
+    }
+    writer.EndObject();
+    writer.EndObject();
+    std::cout << buffer.GetString() << "\n";
+    return buffer.GetString();
+}
+
+std::string JSONMessage::getFromHeader(const std::string &key) const {
+    if (header.find(key) != header.end())
+        return header.at(key);
+    else 
+        return "";
+}
+
+std::string JSONMessage::getFromBody(const std::string &key) const {
+    if (body.find(key) != body.end())
+        return body.at(key);
+    else
+        return "";
+}
+
+void JSONMessage::setHeader(const std::string &key, const std::string &val) {
+    if (header.find(key) == header.end()) {
+        header.insert(std::make_pair(key, val));
+    } else {
+        header[key] = val;
     }
 }
 
-
-bool Message::needResponse() {
-    return _header.needResponse;
-}
-
-std::string Message::returnAddr() {
-    std::string s = _header.originAddr;
-    size_t pos =0;
-    std::string token;
-    while ((pos = s.find("::")) != std::string::npos) {
-        token = s.substr(0,pos);
-        s.erase(0, pos + 2);
+void JSONMessage::setBody(const std::string &key, const std::string &val) {
+    if (body.find(key) == header.end()) {
+        body.insert(std::make_pair(key, val));
+    } else {
+        body[key] = val;
     }
-    return s;
 }
 
-void Message::writeHeader(int delimiters, std::string msg_type, std::string full_addr, bool need_response) {
-    _header.delimiters = delimiters;
-    _header.msgType = msg_type;
-    _header.originAddr = full_addr;
-    _header.needResponse = need_response;
+int JSONMessage::getPriority() const {
+    return 1;
 }
-
-std::string Message::getMsg() {
-    return _string;
-}
+ std::string JSONMessage::returnAddr() const {
+     return getFromHeader("returnAddr");
+ }
