@@ -85,7 +85,7 @@ void MessageControl::_run_sender() {
 }
 
 void MessageControl::_run_receiver() {
-    log->info("Started recevier");
+    log->debug("Started recevier");
     zmq::context_t ctx(1);
     zmq::socket_t inSock(ctx, ZMQ_PULL);
     zmq::pollitem_t items[] = {{inSock, 0, ZMQ_POLLIN, 0}};
