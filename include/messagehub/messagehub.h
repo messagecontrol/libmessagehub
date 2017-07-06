@@ -5,11 +5,7 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 #endif
 
-// TODO: We probably don't need to import all of these ... they were there
-//       since planning and learning
 #include <iostream>
-#include <cstdlib>
-#include <unistd.h>
 #include <vector>
 #include <queue>
 #include <map>
@@ -71,7 +67,7 @@ class MessageControl {
 
         std::string getAddr();
 
-        void send(JSONMessage &msg, const std::string &dst);
+        void send(std::shared_ptr<JSONMessage> msg, const std::string &dst);
 
         JSONMessage recv();
 

@@ -1,33 +1,35 @@
 #include "messagehub/message.h"
 
-JSONMessage::JSONMessage(const std::string &s): handler(std::make_shared<Handler>(std::shared_ptr<JSONMessage>(this))) {
+JSONMessage::JSONMessage(const std::string &s) {
+    auto l = spdlog::get("MessageControl");
+    l->debug("Attempting to parse string");
     parseString(s);
+    editingHeader = true;
+    currentKey = "[UNSET]";
+    l->debug("Parsed string");
+    l->debug("Init handler");
 }
 
-JSONMessage::JSONMessage(zmq::message_t &zmsg): handler(std::make_shared<Handler>(std::shared_ptr<JSONMessage>(this))) {
+JSONMessage::JSONMessage(zmq::message_t &zmsg) {
     std::string s = std::string(static_cast<char*>(zmsg.data()), zmsg.size());
     parseString(s);
+    editingHeader = true;
+    currentKey = "[UNSET]";
 } 
 
-JSONMessage JSONMessage::empty() {
-    return JSONMessage("{\"header\": {}, \"body\":{}}");
+std::shared_ptr<JSONMessage> JSONMessage::empty() {
+    auto l = spdlog::get("MessageControl");
+    l->debug("Attempting to initialize message");
+    JSONMessage m = JSONMessage("{\"header\": {}, \"body\":{}}");
+    l->debug("Message initialized");
+    return std::make_shared<JSONMessage>(m);
 }
 
 void JSONMessage::parseString(const std::string & s) {
-    rapidjson::Document msg;
-    msg.Parse(s);
-    // Some message requirements
-    if (!msg.IsObject()) 
-        throw MessageFormatException("Message JSON is not an object");
-    if (!msg.HasMember("header"))
-        throw MessageFormatException("Message is missing header", s);  
-    if (!msg["header"].IsObject())
-        throw MessageFormatException("Message's header is not an object", s);
-    if (!msg.HasMember("body"))
-        throw MessageFormatException("Message is missing an body", s);
-    if (!msg["body"].IsObject())
-        throw MessageFormatException("Message's body is not an object", s); 
-    msg.Accept(*handler);
+    rapidjson::Reader msg;
+    Handler handler(*this);
+    rapidjson::StringStream ss(s.c_str());
+    msg.Parse(ss, handler);
 }
 
 zmq::message_t JSONMessage::toZmqMsg() const {
@@ -45,14 +47,14 @@ std::string JSONMessage::toString() const {
     writer.StartObject();
     for (std::pair<std::string, std::string> const elem : header) {
         writer.Key(elem.first.c_str());
-        writer.String(elem.second);
+        writer.String(elem.second.c_str());
     }
     writer.EndObject();
     writer.Key("body");
     writer.StartObject();
     for (std::pair<std::string, std::string> const elem : body) {
         writer.Key(elem.first.c_str());
-        writer.String(elem.second);
+        writer.String(elem.second.c_str());
     }
     writer.EndObject();
     writer.EndObject();
@@ -91,6 +93,7 @@ void JSONMessage::setBody(const std::string &key, const std::string &val) {
 }
 
 int JSONMessage::getPriority() const {
+    // Not implemented yet
     return 1;
 }
 
@@ -103,7 +106,6 @@ JSONMessage::JSONMessage(const JSONMessage& msg) {
     std::cout << "COPYING message\n";
     header = msg.header;
     body = msg.body;
-    handler = msg.handler;
     currentKey = msg.currentKey;
     editingHeader = msg.editingHeader;
 }

@@ -13,21 +13,6 @@ MessageControl::~MessageControl() {
     if(receiver->joinable())
         receiver->join();
 }
-/*
-void MessageHub::process(std::string s) {
-    std::cout << s << "\n";
-}
-
-void MessageHub::process(Message &msg) {
-    if (std::strcmp(msg.getMsg().c_str(), "HANDSHAKE") == 0) {
-        std::cout << "[INFO] Recevied handshake request\n";
-        send("SHAKEHAND", msg.returnAddr());
-    } else if (std::strcmp(msg.getMsg().c_str(), "SHAKEHAND") == 0) {
-        waitingOnShake = false;
-    } else {
-        process(msg.getMsg());
-    }
-}*/
 
 void MessageControl::run() {
     log->info("Initializing Threads");
@@ -35,32 +20,6 @@ void MessageControl::run() {
     receiver = std::make_unique<std::thread>(std::thread(&MessageControl::_run_receiver, this));
     sender = std::make_unique<std::thread>(std::thread(&MessageControl::_run_sender, this));
 }
-/*
-void _run() {
-
-    while (still_process) {
-        if(!inQueue.empty()) {
-            std::cout << "READING INBOX\n";
-            //zmq::message_t zmsg;
-            //zmsg.copy(&inQueue.front()); 
-            
-            //std::string s = std::string(static_cast<char*>(inQueue.front().data()), inQueue.front().size());
-            Message msg = inQueue.front();
-            std::cout << "PROCESSING MESSAGE\n";
-            process(msg);
-            if (msg.needResponse()) {
-                std::cout << "SENDING RESPONSE\n";
-                Message m("YOUR MESSAGE WAS ACKNOWLEDGED");
-                m.writeHeader(DELIMITERS_V1, "TEST", fullAddr()); 
-                outQueue.push(std::make_pair(msg.returnAddr(), m.toZmqMsg())); 
-                
-                std::cout << "Message put in out queue\n";
-            } 
-            inQueue.pop();
-            std::cout << "Popped inQueue\n";
-        }
-    }
-}*/
 
 void MessageControl::_run_manager() {
     log->debug("Started manager");
@@ -76,7 +35,7 @@ void MessageControl::_run_sender() {
     zmq::socket_t outSock(ctx, ZMQ_PUSH);
     while (still_send) {
         if (!outQueue.empty()) {
-            log->debug("Connecting to {}", outQueue.front().first);
+            log->trace("Connecting to {}", outQueue.front().first);
             outSock.connect("tcp://" + outQueue.front().first);
             log->debug("About to send: {}", outQueue.front().second->toString());
             std::string s = outQueue.front().second->toString();
@@ -111,9 +70,10 @@ void MessageControl::_run_receiver() {
             if (m.getFromHeader("type") == std::string("SHAKEHAND"))
                 waitingOnShake = false;
             else if (m.getFromHeader("type") == std::string("HANDSHAKE")) {
-                JSONMessage msg = JSONMessage::empty();
-                msg.setHeader("type", "SHAKEHAND");
-                send(msg, msg.getFromHeader("returnAddr"));  
+                log->debug("Shaking {}'s hand", identity);
+                std::shared_ptr<JSONMessage> msg = JSONMessage::empty();
+                msg->setHeader("type", "SHAKEHAND");
+                send(msg, msg->getFromHeader("returnAddr"));  
             } else
                 inQueue.push(std::make_shared<JSONMessage>(m));
         }
@@ -122,27 +82,25 @@ void MessageControl::_run_receiver() {
     log->debug("Receiver stopped");
 }
 
-
-
-void MessageControl::send(JSONMessage &m, const std::string &dst) {
-    m.setHeader("returnAddr", returnAddr);
-    outQueue.push(std::make_pair(dst, std::make_shared<JSONMessage>(m)));
+void MessageControl::send(std::shared_ptr<JSONMessage> m, const std::string &dst) {
+    m->setHeader("returnAddr", returnAddr);
+    m->setHeader("identity", identity);
+    outQueue.push(std::make_pair(dst, m));
 }
 
 bool MessageControl::handshake(const std::string &ip) {
     bool connected = false;
-    JSONMessage msg = JSONMessage::empty();
-    msg.setHeader("type", "HANDSHAKE");
+    log->trace("Attempting to initialize empty message");
+    std::shared_ptr<JSONMessage> msg = JSONMessage::empty();
+    log->debug("Initialized empty message");
+    msg->setHeader("type", "HANDSHAKE");
     send(msg, ip);
     bool timeout = false;
     std::thread timer(&MessageControl::_timer, this, 5, &timeout);
     timer.detach();
     while (waitingOnShake && !timeout) {}
-    log->debug("Checking in waitingOnShake");
-    log->debug(waitingOnShake);
     connected = !waitingOnShake;
     waitingOnShake = true;
-    log->debug("leaving");
     return connected;
 }
 
@@ -194,7 +152,7 @@ MessageControl::MessageControl(const std::string &name, const std::string &ipadd
     outQueue = std::queue<std::pair<std::string, std::shared_ptr<JSONMessage> > >();
     run();
     // FIXME: sleep is required to let the threads to start
-    // If not fix is found then this can be left as is because in theory its initialized once
+    // If no fix is found then this can be left as is because in theory its initialized once
     // per program 
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 }
@@ -211,7 +169,7 @@ void MessageControl::initializeLog() {
         log_sinks.push_back(color_console_sink);
         log = std::make_shared<spdlog::logger>("MessageControl", std::begin(log_sinks), std::end(log_sinks));//, 4096);
         // This is where the log level is set
-        log->set_level(spdlog::level::trace);
+        log->set_level(spdlog::level::debug);
         spdlog::register_logger(log);
     } catch (const spdlog::spdlog_ex& e) {
         std::cerr << "[ERROR] Log was not initialized\n";
