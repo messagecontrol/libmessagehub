@@ -89,10 +89,7 @@ class Handler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Handler> 
             return true;
         }
         bool StartObject() {
-            if(msg.currentKey != std::string("[UNSET]") && !msg.editingHeader)
-                msg.editingHeader = false;
-            else
-                msg.editingHeader = true;
+            msg.editingHeader = msg.currentKey != std::string("body");
             return true;
         }
         bool Key(const char* str, rapidjson::SizeType length, bool copy) {
