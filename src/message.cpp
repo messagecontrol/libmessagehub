@@ -1,13 +1,9 @@
 #include "messagehub/message.h"
 
 JSONMessage::JSONMessage(const std::string &s) {
-    auto l = spdlog::get("MessageControl");
-    l->debug("Attempting to parse string");
     parseString(s);
     editingHeader = true;
     currentKey = "[UNSET]";
-    l->debug("Parsed string");
-    l->debug("Init handler");
 }
 
 JSONMessage::JSONMessage(zmq::message_t &zmsg) {
@@ -18,10 +14,7 @@ JSONMessage::JSONMessage(zmq::message_t &zmsg) {
 } 
 
 std::shared_ptr<JSONMessage> JSONMessage::empty() {
-    auto l = spdlog::get("MessageControl");
-    l->debug("Attempting to initialize message");
-    JSONMessage m = JSONMessage("{\"header\": {}, \"body\":{}}");
-    l->debug("Message initialized");
+    JSONMessage m = JSONMessage("{\"header\": { \"empty\":\"true\"}, \"body\":{}}");
     return std::make_shared<JSONMessage>(m);
 }
 
@@ -30,6 +23,7 @@ void JSONMessage::parseString(const std::string & s) {
     Handler handler(*this);
     rapidjson::StringStream ss(s.c_str());
     msg.Parse(ss, handler);
+    std::cout << toString() << "\n";
 }
 
 zmq::message_t JSONMessage::toZmqMsg() const {
@@ -58,7 +52,6 @@ std::string JSONMessage::toString() const {
     }
     writer.EndObject();
     writer.EndObject();
-    std::cout << buffer.GetString() << "\n";
     return buffer.GetString();
 }
 
@@ -103,7 +96,6 @@ std::string JSONMessage::returnAddr() const {
 
 
 JSONMessage::JSONMessage(const JSONMessage& msg) {
-    std::cout << "COPYING message\n";
     header = msg.header;
     body = msg.body;
     currentKey = msg.currentKey;

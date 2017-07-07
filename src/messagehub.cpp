@@ -24,7 +24,7 @@ void MessageControl::run() {
 void MessageControl::_run_manager() {
     log->debug("Started manager");
     while (still_manage) {
-    
+
     }
     log->debug("Manager ended");
 }
@@ -62,20 +62,23 @@ void MessageControl::_run_receiver() {
     inSock.bind("tcp://*:" + std::to_string(port));
     while (still_receive) {
         zmq::poll(&items[0], 1, 10);
-            if (items[0].revents & ZMQ_POLLIN) {    
-                log->debug("RECEIVING");
-            zmq::message_t msg;
-            inSock.recv(&msg);
-            JSONMessage m(msg);
-            if (m.getFromHeader("type") == std::string("SHAKEHAND"))
+        if (items[0].revents & ZMQ_POLLIN) {    
+            log->trace("Receiving message");
+            zmq::message_t zmsg;
+            inSock.recv(&zmsg);
+            std::shared_ptr<JSONMessage> m = std::make_shared<JSONMessage>(std::string(static_cast<char*>(zmsg.data()), zmsg.size()));
+            log->debug(std::string(static_cast<char*>(zmsg.data()), zmsg.size()));
+            log->debug("Received message with content: {}", m->toString());
+            if (m->getFromHeader("type") == std::string("SHAKEHAND"))
                 waitingOnShake = false;
-            else if (m.getFromHeader("type") == std::string("HANDSHAKE")) {
+            else if (m->getFromHeader("type") == std::string("HANDSHAKE")) {
                 log->debug("Shaking {}'s hand", identity);
                 std::shared_ptr<JSONMessage> msg = JSONMessage::empty();
                 msg->setHeader("type", "SHAKEHAND");
-                send(msg, msg->getFromHeader("returnAddr"));  
+                log->trace("Constructed message: {}", msg->toString());
+                send(msg, m->getFromHeader("returnAddr"));  
             } else
-                inQueue.push(std::make_shared<JSONMessage>(m));
+                inQueue.push(std::make_shared<JSONMessage>(zmsg));
         }
     }
     inSock.close();
@@ -94,7 +97,7 @@ bool MessageControl::handshake(const std::string &ip) {
     std::shared_ptr<JSONMessage> msg = JSONMessage::empty();
     log->debug("Initialized empty message");
     msg->setHeader("type", "HANDSHAKE");
-    send(msg, ip);
+    send(std::shared_ptr<JSONMessage>(msg), ip);
     bool timeout = false;
     std::thread timer(&MessageControl::_timer, this, 5, &timeout);
     timer.detach();
@@ -127,7 +130,6 @@ bool MessageControl::connect(const std::string &ipaddr, const int &port, const s
 
 bool MessageControl::connect(const std::string &ipaddr, const std::string &name) {
     log->debug("Initiating handshake with {}", ipaddr);
-    bool success = handshake(ipaddr);
     if (handshake(ipaddr)) {
         std::cout << "About to log\n";
         log->info("Successfully connected to {}", name);
@@ -169,7 +171,7 @@ void MessageControl::initializeLog() {
         log_sinks.push_back(color_console_sink);
         log = std::make_shared<spdlog::logger>("MessageControl", std::begin(log_sinks), std::end(log_sinks));//, 4096);
         // This is where the log level is set
-        log->set_level(spdlog::level::debug);
+        log->set_level(spdlog::level::trace);
         spdlog::register_logger(log);
     } catch (const spdlog::spdlog_ex& e) {
         std::cerr << "[ERROR] Log was not initialized\n";
