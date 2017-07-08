@@ -5,7 +5,6 @@
 //#define RAPIDJSON_HAS_STDSTRING 1
 #endif
 
-#include <iostream>
 #include <string>
 #include <sstream>
 #include <memory>

@@ -1,10 +1,6 @@
 #ifndef MESSAGEHUB_H
 #define MESSAGEHUB_H
 
-#ifndef RAPIDJSON_HAS_STDSTRING
-#define RAPIDJSON_HAS_STDSTRING 1
-#endif
-
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -18,10 +14,6 @@
 #include <spdlog/async_logger.h>
 #include <rapidjson/reader.h>
 #include "messagehub/message.h"
-
-// The listening port
-// TODO: Get from a config
-#define DEFAULT_PORT 5555
 
 
 class MessageControl {

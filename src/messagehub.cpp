@@ -36,8 +36,18 @@ void MessageControl::_run_sender() {
     while (still_send) {
         if (!outQueue.empty()) {
             log->trace("Connecting to {}", outQueue.front().first);
+            if (connections.find(outQueue.front().first) == connections.end() || !connections.at(outQueue.front().first).second) {
+                log->debug("{} is not registered as a connected endpoint, preforming handshake", 
+                           outQueue.front().first);
+                if (!connect(outQueue.front().first, outQueue.front().first)) {
+                    log->error("{} is not up to receive messages, dropping message",
+                               outQueue.front().first);
+                    outQueue.pop();
+                    continue;
+                }
+            }
             outSock.connect("tcp://" + outQueue.front().first);
-            log->debug("About to send: {}", outQueue.front().second->toString());
+            log->trace("About to send: {}", outQueue.front().second->toString());
             std::string s = outQueue.front().second->toString();
             zmq::message_t zmsg(s.size());
             std::copy(s.begin(), s.end(), static_cast<char *>(zmsg.data()));
@@ -47,7 +57,7 @@ void MessageControl::_run_sender() {
                 log->error("Send Failed");
                 log->error(e.what());
             }
-            log->debug("Sent");
+            log->trace("Sent: {}", outQueue.front().first);
             outQueue.pop();
         }
     }
@@ -99,7 +109,7 @@ bool MessageControl::handshake(const std::string &ip) {
     msg->setHeader("type", "HANDSHAKE");
     send(std::shared_ptr<JSONMessage>(msg), ip);
     bool timeout = false;
-    std::thread timer(&MessageControl::_timer, this, 5, &timeout);
+    std::thread timer(&MessageControl::_timer, this, 30, &timeout);
     timer.detach();
     while (waitingOnShake && !timeout) {}
     connected = !waitingOnShake;

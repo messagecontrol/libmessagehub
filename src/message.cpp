@@ -23,7 +23,6 @@ void JSONMessage::parseString(const std::string & s) {
     Handler handler(*this);
     rapidjson::StringStream ss(s.c_str());
     msg.Parse(ss, handler);
-    std::cout << toString() << "\n";
 }
 
 zmq::message_t JSONMessage::toZmqMsg() const {

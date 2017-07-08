@@ -5,7 +5,10 @@ project(MessageHub)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lzmq -std=c++14 -pthread")
+#set(BUILD_SHARED_LIBS off)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+
 
 find_package(ZeroMQ REQUIRED)
 
@@ -25,10 +28,10 @@ include_directories(
 
 add_subdirectory(src)
 link_directories(${CMAKE_BINARY_DIR})
-add_library(messagehub STATIC ${SRCS})
-target_link_libraries(messagehub LINK_PUBLIC ${ZeroMQ_Library} )
+add_library(messagehub ${SRCS})
+target_link_libraries(messagehub  ${ZeroMQ_Library} )
 add_executable(main src/main.cpp)
-target_link_libraries(main ${ZeroMQ_Library} messagehub)
+target_link_libraries(main messagehub)
 
 install(TARGETS messagehub DESTINATION /usr/local/lib/messagehub)
 install(DIRECTORY ./include/messagehub/ DESTINATION /usr/local/include)
