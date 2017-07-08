@@ -11,10 +11,10 @@ JSONMessage::JSONMessage(zmq::message_t &zmsg) {
     parseString(s);
     editingHeader = true;
     currentKey = "[UNSET]";
-} 
+}
 
 std::shared_ptr<JSONMessage> JSONMessage::empty() {
-    JSONMessage m = JSONMessage("{\"header\": { \"empty\":\"true\"}, \"body\":{}}");
+    JSONMessage m = JSONMessage("{\"header\": {}, \"body\":{}}");
     return std::make_shared<JSONMessage>(m);
 }
 
@@ -57,7 +57,7 @@ std::string JSONMessage::toString() const {
 std::string JSONMessage::getFromHeader(const std::string &key) const {
     if (header.find(key) != header.end())
         return header.at(key);
-    else 
+    else
         return "";
 }
 

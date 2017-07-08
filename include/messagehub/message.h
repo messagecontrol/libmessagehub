@@ -36,7 +36,7 @@ class BaseMessage {
 class JSONMessage: public BaseMessage {
 
     friend class Handler;
-    
+
     protected:
         void parseString(const std::string & s);
         std::map<std::string, std::string> header, body;
@@ -60,7 +60,7 @@ class JSONMessage: public BaseMessage {
         std::string getFromBody(const std::string &s) const;
 
         void setHeader(const std::string &key, const std::string &val);
-        void setBody(const std::string &key, const std::string &val); 
+        void setBody(const std::string &key, const std::string &val);
 };
 
 
@@ -70,7 +70,7 @@ class Handler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Handler> 
         Handler(JSONMessage& parent) : msg(parent) {l = spdlog::get("MessageControl");}
         JSONMessage& msg;
         std::shared_ptr<spdlog::logger> l;
-        bool Null() {return true;} 
+        bool Null() {return true;}
         bool Bool(bool b) {return true;}
         bool Int(int i) {return true;}
         bool Uint(unsigned u) {return true;}

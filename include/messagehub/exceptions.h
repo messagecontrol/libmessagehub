@@ -23,7 +23,6 @@ class MessageFormatException: public MsgHubException {
     protected:
         std::string _incorrect_msg;
     public:
-        
         // The incorrect message is set to "[UNSET]" so that if an incorrect message is empty it will still print showing that it is empty
         inline explicit MessageFormatException(const std::string & m, const std::string & inc = "[UNSET]"): MsgHubException(m), _incorrect_msg(inc) {}
         inline explicit MessageFormatException(const char * m, const char * inc = "[UNSET]"): MsgHubException::MsgHubException(m), _incorrect_msg(inc) {}

@@ -20,7 +20,7 @@ class MessageControl {
     protected:
         std::string returnAddr, identity;
         int port;
-        
+
         // Control Bools
         bool still_manage, still_receive, still_send;
 
@@ -61,10 +61,10 @@ class MessageControl {
 
         void send(std::shared_ptr<JSONMessage> msg, const std::string &dst);
 
-        JSONMessage recv();
+        std::shared_ptr<JSONMessage> recv();
 
         bool connect(const std::string &ipaddr, const int &port, const std::string &name);
-        bool connect(const std::string &ipaddrWithPort, const std::string &name); 
-}; 
+        bool connect(const std::string &ipaddrWithPort, const std::string &name);
+};
 
 #endif
