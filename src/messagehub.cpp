@@ -36,7 +36,10 @@ void MessageControl::_run_sender() {
     while (still_send) {
         if (!outQueue.empty()) {
             log->trace("Connecting to {}", outQueue.front().first);
-            if (connections.find(outQueue.front().first) == connections.end() || !connections.at(outQueue.front().first).second) {
+            if (outQueue.front().second->getFromHeader("type") != std::string("HANDSHAKE") &&
+                outQueue.front().second->getFromHeader("type") != std::string("SHAKEHAND") &&
+                (connections.find(outQueue.front().first) == connections.end() || 
+                 !connections.at(outQueue.front().first).second)) {
                 log->debug("{} is not registered as a connected endpoint, preforming handshake", 
                            outQueue.front().first);
                 if (!connect(outQueue.front().first, outQueue.front().first)) {
