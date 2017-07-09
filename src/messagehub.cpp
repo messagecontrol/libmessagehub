@@ -105,9 +105,12 @@ void MessageControl::send(std::shared_ptr<JSONMessage> m, const std::string &dst
 }
 
 std::shared_ptr<JSONMessage> MessageControl::recv() {
-    std::shared_ptr<JSONMessage> msg = inQueue.front();
-    inQueue.pop();
-    return msg;
+    if (!inQueue.empty()) {
+        std::shared_ptr<JSONMessage> msg = inQueue.front();
+        inQueue.pop();
+        return msg;
+    }
+    return nullptr;
 }
 
 bool MessageControl::handshake(const std::string &ip) {
