@@ -1,7 +1,7 @@
-[submodule "build/vendor/rapidjson"]
-	path = build/vendor/rapidjson
+[submodule "thirdparty/rapidjson"]
+	path = thirdparty/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
 	branch = version1.1.0
-[submodule "build/vendor/spdlog"]
-	path = build/vendor/spdlog
+[submodule "thirdparty/spdlog"]
+	path = thirdparty/spdlog
 	url = https://github.com/gabime/spdlog.git
