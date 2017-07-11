@@ -29,9 +29,9 @@ class MessageControl {
 
         std::unique_ptr<std::thread> manager, receiver, sender;
 
-        std::queue<std::shared_ptr<JSONMessage> > inQueue;
+        std::queue<Message_ptr > inQueue;
 
-        std::queue<std::pair<std::string, std::shared_ptr<JSONMessage> > > outQueue;
+        std::queue<std::pair<std::string, Message_ptr > > outQueue;
 
         std::map<std::string, std::pair<std::string, bool> > connections;
         std::shared_ptr<spdlog::logger> log;
@@ -59,9 +59,9 @@ class MessageControl {
 
         std::string getAddr();
 
-        void send(std::shared_ptr<JSONMessage> msg, const std::string &dst);
+        void send(Message_ptr msg, const std::string &dst);
 
-        std::shared_ptr<JSONMessage> recv();
+        Message_ptr recv();
 
         bool connect(const std::string &ipaddr, const int &port, const std::string &name);
         bool connect(const std::string &ipaddrWithPort, const std::string &name);

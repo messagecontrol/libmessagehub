@@ -1,4 +1,4 @@
-#include "messagehub/messagehub.h"
+#include "messagehub/messagecontrol.h"
 
 
 MessageControl::~MessageControl() {
@@ -79,34 +79,34 @@ void MessageControl::_run_receiver() {
             log->trace("Receiving message");
             zmq::message_t zmsg;
             inSock.recv(&zmsg);
-            std::shared_ptr<JSONMessage> m = std::make_shared<JSONMessage>(std::string(static_cast<char*>(zmsg.data()), zmsg.size()));
+            Message_ptr m = std::make_shared<Message>(std::string(static_cast<char*>(zmsg.data()), zmsg.size()));
             log->trace(std::string(static_cast<char*>(zmsg.data()), zmsg.size()));
             log->trace("Received message with content: {}", m->toString());
             if (m->getFromHeader("type") == std::string("SHAKEHAND"))
                 waitingOnShake = false;
             else if (m->getFromHeader("type") == std::string("HANDSHAKE")) {
                 log->debug("Shaking {}'s hand", identity);
-                std::shared_ptr<JSONMessage> msg = JSONMessage::empty();
+                Message_ptr msg = Message::empty();
                 msg->setHeader("type", "SHAKEHAND");
                 log->trace("Constructed message: {}", msg->toString());
                 send(msg, m->getFromHeader("returnAddr"));
             } else
-                inQueue.push(std::make_shared<JSONMessage>(zmsg));
+                inQueue.push(std::make_shared<Message>(zmsg));
         }
     }
     inSock.close();
     log->debug("Receiver stopped");
 }
 
-void MessageControl::send(std::shared_ptr<JSONMessage> m, const std::string &dst) {
+void MessageControl::send(Message_ptr m, const std::string &dst) {
     m->setHeader("returnAddr", returnAddr);
     m->setHeader("identity", identity);
     outQueue.push(std::make_pair(dst, m));
 }
 
-std::shared_ptr<JSONMessage> MessageControl::recv() {
+Message_ptr MessageControl::recv() {
     if (!inQueue.empty()) {
-        std::shared_ptr<JSONMessage> msg = inQueue.front();
+        Message_ptr msg = inQueue.front();
         inQueue.pop();
         return msg;
     }
@@ -116,10 +116,10 @@ std::shared_ptr<JSONMessage> MessageControl::recv() {
 bool MessageControl::handshake(const std::string &ip) {
     bool connected = false;
     log->trace("Attempting to initialize empty message");
-    std::shared_ptr<JSONMessage> msg = JSONMessage::empty();
+    Message_ptr msg = Message::empty();
     log->trace("Initialized empty message");
     msg->setHeader("type", "HANDSHAKE");
-    send(std::shared_ptr<JSONMessage>(msg), ip);
+    send(Message_ptr(msg), ip);
     bool timeout = false;
     std::thread timer(&MessageControl::_timer, this, 30, &timeout);
     timer.detach();
@@ -171,8 +171,8 @@ MessageControl::MessageControl(const std::string &name, const std::string &ipadd
     still_manage = true;
     still_receive = true;
     waitingOnShake = true;
-    inQueue = std::queue<std::shared_ptr<JSONMessage> >();
-    outQueue = std::queue<std::pair<std::string, std::shared_ptr<JSONMessage> > >();
+    inQueue = std::queue<Message_ptr >();
+    outQueue = std::queue<std::pair<std::string, Message_ptr > >();
     run();
     // FIXME: sleep is required to let the threads to start
     // If no fix is found then this can be left as is because in theory its initialized once

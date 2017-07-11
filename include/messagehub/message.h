@@ -18,7 +18,13 @@
 #include "rapidjson/reader.h"
 #include "messagehub/exceptions.h"
 
+
 class Handler;
+class Message;
+
+
+typedef std::shared_ptr<Message> Message_ptr;
+
 class BaseMessage {
     protected:
         virtual void parseString(const std::string &s) = 0;
@@ -33,7 +39,7 @@ class BaseMessage {
 
 
 
-class JSONMessage: public BaseMessage {
+class Message: public BaseMessage {
 
     friend class Handler;
 
@@ -45,11 +51,11 @@ class JSONMessage: public BaseMessage {
         void set(const std::string &val);
 
     public:
-        JSONMessage(const std::string &s);
-        JSONMessage(zmq::message_t &zmsg);
-        JSONMessage(const JSONMessage &msg);
+        Message(const std::string &s);
+        Message(zmq::message_t &zmsg);
+        Message(const Message &msg);
 
-        static std::shared_ptr<JSONMessage> empty();
+        static Message_ptr empty();
         zmq::message_t toZmqMsg() const;
         std::string toString() const;
         std::string returnAddr() const;
@@ -67,8 +73,8 @@ class JSONMessage: public BaseMessage {
 class Handler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Handler> {
 
     public:
-        Handler(JSONMessage& parent) : msg(parent) {l = spdlog::get("MessageControl");}
-        JSONMessage& msg;
+        Handler(Message& parent) : msg(parent) {l = spdlog::get("MessageControl");}
+        Message& msg;
         std::shared_ptr<spdlog::logger> l;
         bool Null() {return true;}
         bool Bool(bool b) {return true;}

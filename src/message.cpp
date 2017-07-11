@@ -1,38 +1,38 @@
 #include "messagehub/message.h"
 
-JSONMessage::JSONMessage(const std::string &s) {
+Message::Message(const std::string &s) {
     parseString(s);
     editingHeader = true;
     currentKey = "[UNSET]";
 }
 
-JSONMessage::JSONMessage(zmq::message_t &zmsg) {
+Message::Message(zmq::message_t &zmsg) {
     std::string s = std::string(static_cast<char*>(zmsg.data()), zmsg.size());
     parseString(s);
     editingHeader = true;
     currentKey = "[UNSET]";
 }
 
-std::shared_ptr<JSONMessage> JSONMessage::empty() {
-    JSONMessage m = JSONMessage("{\"header\": {}, \"body\":{}}");
-    return std::make_shared<JSONMessage>(m);
+Message_ptr Message::empty() {
+    Message m = Message("{\"header\": {}, \"body\":{}}");
+    return std::make_shared<Message>(m);
 }
 
-void JSONMessage::parseString(const std::string & s) {
+void Message::parseString(const std::string & s) {
     rapidjson::Reader msg;
     Handler handler(*this);
     rapidjson::StringStream ss(s.c_str());
     msg.Parse(ss, handler);
 }
 
-zmq::message_t JSONMessage::toZmqMsg() const {
+zmq::message_t Message::toZmqMsg() const {
     const std::string s = toString();
     zmq::message_t msg(s.size());
     std::copy(s.begin(), s.end(), static_cast<char *>(msg.data()));
     return msg;
 }
 
-std::string JSONMessage::toString() const {
+std::string Message::toString() const {
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     writer.StartObject();
@@ -54,21 +54,21 @@ std::string JSONMessage::toString() const {
     return buffer.GetString();
 }
 
-std::string JSONMessage::getFromHeader(const std::string &key) const {
+std::string Message::getFromHeader(const std::string &key) const {
     if (header.find(key) != header.end())
         return header.at(key);
     else
         return "";
 }
 
-std::string JSONMessage::getFromBody(const std::string &key) const {
+std::string Message::getFromBody(const std::string &key) const {
     if (body.find(key) != body.end())
         return body.at(key);
     else
         return "";
 }
 
-void JSONMessage::setHeader(const std::string &key, const std::string &val) {
+void Message::setHeader(const std::string &key, const std::string &val) {
     if (header.find(key) == header.end()) {
         header.insert(std::make_pair(key, val));
     } else {
@@ -76,7 +76,7 @@ void JSONMessage::setHeader(const std::string &key, const std::string &val) {
     }
 }
 
-void JSONMessage::setBody(const std::string &key, const std::string &val) {
+void Message::setBody(const std::string &key, const std::string &val) {
     if (body.find(key) == header.end()) {
         body.insert(std::make_pair(key, val));
     } else {
@@ -84,17 +84,17 @@ void JSONMessage::setBody(const std::string &key, const std::string &val) {
     }
 }
 
-int JSONMessage::getPriority() const {
+int Message::getPriority() const {
     // Not implemented yet
     return 1;
 }
 
-std::string JSONMessage::returnAddr() const {
+std::string Message::returnAddr() const {
     return getFromHeader("returnAddr");
 }
 
 
-JSONMessage::JSONMessage(const JSONMessage& msg) {
+Message::Message(const Message& msg) {
     header = msg.header;
     body = msg.body;
     currentKey = msg.currentKey;
