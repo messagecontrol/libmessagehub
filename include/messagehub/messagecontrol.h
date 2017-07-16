@@ -14,9 +14,12 @@
 #include <spdlog/async_logger.h>
 #include <rapidjson/reader.h>
 #include "messagehub/message.h"
+#include "messagehub/manager.h"
 
+class Manager;
 
 class MessageControl {
+    friend Manager;
     protected:
         std::string returnAddr, identity;
         int port;

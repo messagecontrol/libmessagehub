@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 set(SRCS
     ${PROJECT_SOURCE_DIR}/src/messagecontrol.cpp
+    ${PROJECT_SOURCE_DIR}/src/manager.cpp
     ${PROJECT_SOURCE_DIR}/src/message.cpp
 )
 
