@@ -1,0 +1,56 @@
+language: cpp
+
+os:
+    - linux
+    - osx
+
+
+sudo: required
+compiler:
+    - gcc
+
+cache:
+    directories:
+        - $TRAVIS_BUILD_DIR/zmq
+
+
+notifications:
+    email: false #for now
+
+
+addons:
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+        packages:
+            - gcc-5
+            - pkg-config
+            - build-essential
+            - cmake # probably already installed
+
+
+
+install:
+    - mkdir zmq || true
+    - cd zmq
+    - git clone https://github.com/zeromq/libzmq.git || true
+    - git clone https://github.com/zeromq/cppzmq.git || true
+    - cd libzmq
+    - mkdir build || true
+    - cd build
+    - cmake .. && make
+    - sudo make install
+    - cd ../../cppzmq
+    - mkdir build || true
+    - cd build
+    - cmake && make
+    - sudo make install
+    - cd $TRAVIS_BUILD_DIR
+
+
+
+script:
+    - mkdir build && cd build
+    - cmake ..
+    - make
+    - make check
