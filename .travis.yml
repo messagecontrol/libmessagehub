@@ -4,7 +4,6 @@ os:
     - linux
     - osx
 
-
 sudo: required
 compiler:
     - gcc
@@ -13,10 +12,8 @@ cache:
     directories:
         - $TRAVIS_BUILD_DIR/zmq
 
-
 notifications:
     email: false #for now
-
 
 addons:
     apt:
@@ -27,8 +24,6 @@ addons:
             - pkg-config
             - build-essential
             - cmake # probably already installed
-
-
 
 install:
     - mkdir zmq || true
@@ -46,8 +41,6 @@ install:
     - cmake && make
     - sudo make install
     - cd $TRAVIS_BUILD_DIR
-
-
 
 script:
     - mkdir build && cd build
