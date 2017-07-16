@@ -8,6 +8,9 @@ sudo: required
 compiler:
     - gcc
 
+git:
+    submodules: false
+
 cache:
     directories:
         - $TRAVIS_BUILD_DIR/zmq
@@ -24,6 +27,10 @@ addons:
             - pkg-config
             - build-essential
             - cmake # probably already installed
+
+
+before_install:
+    - sed -i 's/git@github.com:/git:\/\/github.com\//' .gitmodules
 
 install:
     - mkdir zmq || true
