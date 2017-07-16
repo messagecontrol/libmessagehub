@@ -25,7 +25,7 @@ addons:
         sources:
             - ubuntu-toolchain-r-test
         packages:
-            - gcc-5
+            - gcc-6
             - pkg-config
             - build-essential
             - cmake # probably already installed
