@@ -14,14 +14,15 @@ set(MESSAGEHUB_VERSION_STRING ${MESSAGEHUB_VERSION_MAJOR}.${MESSAGEHUB_VERSION_M
 
 set(LIB_NAME "messagehub")
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lzmq -std=c++11 -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lzmq -std=c++14")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(THIRDPARTY_DIR "${PROJECT_SOURCE_DIR}/thirdparty")
 
 find_package(ZeroMQ REQUIRED)
+find_package(Threads REQUIRED)
 
 # Set the include directory
 
