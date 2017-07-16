@@ -47,7 +47,7 @@ install:
     - cd ../../cppzmq
     - mkdir build || true
     - cd build
-    - cmake && make
+    - cmake .. && make
     - sudo make install
     - cd $TRAVIS_BUILD_DIR
 
