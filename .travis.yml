@@ -25,6 +25,7 @@ addons:
             - ubuntu-toolchain-r-test
         packages:
             - gcc-6
+            - g++-6 # Apparently this is not installed with gcc-6
             - pkg-config
             - build-essential
             - cmake # probably already installed
