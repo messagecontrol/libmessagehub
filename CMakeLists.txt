@@ -3,6 +3,10 @@ cmake_policy(SET CMP0048 NEW)
 
 project(MessageHub VERSION 0.0.2)
 
+option(BUILD_STATIC_LIBS "Build the static library" ON)
+option(BUILD_SHARED_LIBS "Build the shared library" ON)
+option(BUILD_TESTS "Build test programs" ON)
+
 set(MESSAGEHUB_VERSION_MAJOR 0)
 set(MESSAGEHUB_VERSION_MINOR 0)
 set(MESSAGEHUB_VERSION_PATCH 2)
@@ -38,6 +42,7 @@ set(TEST_INCLUDE_DIRS
     ${THIRDPARTY_DIR}/googletest/googlemock/include/
 )
 
+
 include_directories(
     ${INCLUDE_DIRS}
     ${TEST_INCLUDE_DIRS}
@@ -47,6 +52,15 @@ include_directories(
 link_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(src)
+
+if (BUILD_TESTS)
+    set(SAVED_BUILD_SHARED_LIBS ${BUILD_STATIC_LIBS})
+    set(BUILD_SHARED_LIBS OFF)
+    add_subdirectory(${THIRDPARTY_DIR}/googletest)
+    enable_testing()
+    add_subdirectory(tests)
+    set(BUILD_SHARED_LIBS ${SAVED_BUILD_SHARED_LIBS})
+endif (BUILD_TESTS)
 
 
 install(DIRECTORY ${INCLUDE_DIRS}  DESTINATION /usr/local/include)
