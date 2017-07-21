@@ -68,7 +68,7 @@ class Message: public BaseMessage {
 class Handler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Handler> {
 
     public:
-        Handler(Message& parent) : msg(parent) {l = spdlog::get("MessageControl");}
+        Handler(Message& parent) : msg(parent) {}
         Message& msg;
         std::shared_ptr<spdlog::logger> l;
         bool Null() {return true;}
@@ -79,13 +79,10 @@ class Handler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, Handler> 
         bool Uint64(uint64_t u) {return true;}
         bool Double(double d) {return true;}
         bool String(const char* str, rapidjson::SizeType length, bool copy) {
-            if (msg.editingHeader) {
-                l->trace("Inserting {} and {} to {}", msg.currentKey, std::string(str,length), "header");
+            if (msg.editingHeader)
                 msg.setHeader(msg.currentKey, std::string(str, length));
-            } else {
-                l->trace("Inserting {} and {} to {}", msg.currentKey, std::string(str, length), "body");
+            else
                 msg.setBody(msg.currentKey, std::string(str, length));
-            }
             return true;
         }
         bool StartObject() {
