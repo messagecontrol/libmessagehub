@@ -1,4 +1,3 @@
-#include <iostream>
 #include <string>
 #include <gtest/gtest.h>
 
@@ -36,15 +35,33 @@ TEST_F(MessageTest, test_overwrite) {
 
 TEST_F(MessageTest, test_parse) {
     EXPECT_NO_THROW({
-    const std::string s = "{\"header\":{\"test\": \"testing\"},\"body\":{}}";
-    std::cout << s << '\n';
-    Message m = Message(s);
-    });
+        const std::string s = R"({"header":{}, "body":{}})";
+        Message m = Message(s);
+                    });
+    EXPECT_NO_THROW({
+        const std::string s = "{\"header\":{\"test\": \"testing\"},\"body\":{}}";
+        Message m = Message(s);
+                    });
+    EXPECT_NO_THROW({
+        const std::string s = R"({"header":{}, "body":{"hello":"world"}})";
+        Message m = Message(s);
+                    });
+    EXPECT_NO_THROW({
+        const std::string s = R"({"header":{"test": "testing"},"body":{"hello":"world"}})"
+        Message m = Message(s);
+                    });
+}
+
+TEST_F(MessageTest, test_initialize_from_zmsg) {
+    msg->setHeader("testing", "TEST");
+    msg->setBody("Testing", "TEST");
+    zmq::message_t zmsg = msg->toZmqMsg();
+    Message m = Message(zmsg);
+    EXPECT_EQ(m.toString(), std::string(static_cast<char*>(zmsg.data()), zmsg.size()));
 }
 
 TEST_F(MessageTest, test_to_zmq_message) {
     zmq::message_t zmsg = msg->toZmqMsg();
-    std::cout << std::string(static_cast<char*>(zmsg.data()), zmsg.size()) << std::endl;
     EXPECT_EQ(std::string(static_cast<char*>(zmsg.data()), zmsg.size()),
               std::string("{\"header\":{},\"body\":{}}"));
 }
