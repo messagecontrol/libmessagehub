@@ -14,7 +14,7 @@ Message::Message(zmq::message_t &zmsg) {
 }
 
 Message_ptr Message::empty() {
-    Message m = Message("{\"header\": {}, \"body\":{}}");
+    Message m = Message(R"({"header": {}, "body":{}})");
     return std::make_shared<Message>(m);
 }
 

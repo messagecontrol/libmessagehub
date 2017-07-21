@@ -42,3 +42,7 @@ build/
 
 # Compile Commands
 compile_commands.json
+
+# CLion Directories
+.idea/
+cmake-build-debug/

@@ -41,6 +41,7 @@ set(INCLUDE_DIRS
 set(TEST_INCLUDE_DIRS
     ${THIRDPARTY_DIR}/googletest/googletest/include/
     ${THIRDPARTY_DIR}/googletest/googlemock/include/
+    ${PROJECT_SOURCE_DIR}/tests/fixtures/
 )
 
 
