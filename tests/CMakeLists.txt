@@ -9,8 +9,8 @@ set(TEST_SRCS
 add_executable(test_manager test_manager.cpp)
 add_executable(test_message test_message.cpp)
 
-target_link_libraries(test_manager gtest gtest_main messagehub)
-target_link_libraries(test_message gtest gtest_main messagehub)
+target_link_libraries(test_manager gtest gtest_main messagehub ${ZeroMQ_Library})
+target_link_libraries(test_message gtest gtest_main messagehub ${ZeroMQ_Library})
 
 
 add_test(test-manager test_manager)
