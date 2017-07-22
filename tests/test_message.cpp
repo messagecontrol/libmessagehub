@@ -47,7 +47,7 @@ TEST_F(MessageTest, test_parse) {
         Message m = Message(s);
                     });
     EXPECT_NO_THROW({
-        const std::string s = R"({"header":{"test": "testing"},"body":{"hello":"world"}})"
+        const std::string s = R"({"header":{"test": "testing"},"body":{"hello":"world"}})";
         Message m = Message(s);
                     });
 }

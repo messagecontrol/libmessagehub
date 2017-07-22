@@ -37,7 +37,7 @@ void Manager::run() {
 
 void Manager::_checkAllIfUp() {
     using namespace std::literals::chrono_literals;
-    std::chrono::duration<double, std::milli> total_diffs;
+    std::chrono::duration<double, std::milli> total_diffs{0};
     int count;
     auto start = std::chrono::high_resolution_clock::now();
     while(stillCheck) {

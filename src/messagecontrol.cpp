@@ -173,7 +173,6 @@ MessageControl::MessageControl(const std::string &name, const std::string &ipadd
     waitingOnShake = true;
     inQueue = std::queue<Message_ptr >();
     outQueue = std::queue<std::pair<std::string, Message_ptr > >();
-    run();
     // FIXME: sleep is required to let the threads to start
     // If no fix is found then this can be left as is because in theory its initialized once
     // per program
@@ -190,7 +189,7 @@ void MessageControl::initializeLog() {
         color_console_sink = std::make_shared<spdlog::sinks::ansicolor_stdout_sink_mt>();
         //log_sinks.push_back(file_error_sink);
         log_sinks.push_back(color_console_sink);
-        log = std::make_shared<spdlog::logger>("MessageControl", std::begin(log_sinks), std::end(log_sinks));//, 4096);
+        log = std::make_shared<spdlog::logger>(identity, std::begin(log_sinks), std::end(log_sinks));//, 4096);
         // This is where the log level is set
         log->set_level(spdlog::level::debug);
         spdlog::register_logger(log);
