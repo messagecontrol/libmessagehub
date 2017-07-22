@@ -71,3 +71,7 @@ install(DIRECTORY ${INCLUDE_DIRS}  DESTINATION /usr/local/include)
 add_custom_target(uninstall
                   COMMAND xargs rm < ${CMAKE_CURRENT_BINARY_DIR}/install_manifest.txt
                   COMMENT "Uninstalling MessageHub")
+get_cmake_property(_variableNames VARIABLES)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()

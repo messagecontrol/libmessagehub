@@ -17,8 +17,7 @@ set_target_properties(messagehub_static PROPERTIES VERSION ${MESSAGEHUB_VERSION_
                                                     OUTPUT_NAME ${LIB_NAME}
 )
 
-target_link_libraries(messagehub  ${ZeroMQ_Library} )
-target_link_libraries(messagehub_static  ${ZeroMQ_Library} )
+target_link_libraries(messagehub  ${ZeroMQ_LIBRARY} )
+target_link_libraries(messagehub_static  ${ZeroMQ_STATIC_LIBRARY} )
 
 install(TARGETS messagehub messagehub_static DESTINATION /usr/local/lib/messagehub)
-
