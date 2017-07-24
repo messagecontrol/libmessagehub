@@ -1,4 +1,7 @@
 # messagehub
+[![Build Status](https://travis-ci.org/taran96/messagehub.svg?branch=master)](https://travis-ci.org/taran96/messagehub)
+
+
 This project uses specific message formats to pass information between different programs. This also includes programs on different systems. It uses ZeroMQ to create connections between the processes. This project is pretty simple and more of a learning experience overall.
 ## Components
 ### MessageHub
@@ -13,10 +16,11 @@ This component is responsible for keeping track of all nodes in the connections 
 All contributions are welcomed via pull requests, as long as they abide to the following:
 - There **must** be documentation on the feature(s) added. *(Currently there is no documentation)*
 - Comments in the code **must** follow the format required to generate documentation.  *(Currently there is no way to generate documentation)*
-- Unit tests and if needed integration tests must also be provided for new features. *(Currently no testing suite is being used)*
+- Unit tests and if needed integration tests must also be provided for new features.
 - Small bugfixes do not have to include all the above, but the pull request should reference the issue if there is one related.
 ## Todo
 - [x] Provide a project structure
 - [ ] Set up doxygen or something of the likes
 - [ ] Create main documentations
-- [ ] Either use an existing testing suite or create own
+- [x] Either use an existing testing suite or create own
+- [ ] Have user provide logger (Potentially support multiple loggers)
