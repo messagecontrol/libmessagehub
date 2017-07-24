@@ -34,6 +34,7 @@ addons:
 before_install:
     - sed -i 's/git@github.com:/git:\/\/github.com\//' .gitmodules
     - export CXX=g++-6
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 install:
     - mkdir zmq || true
@@ -51,6 +52,7 @@ install:
     - cmake .. && make VERBOSE=1
     - sudo make install
     - cd $TRAVIS_BUILD_DIR
+    - sudo ldconfig
 
 script:
     - mkdir build && cd build
