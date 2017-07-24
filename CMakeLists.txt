@@ -21,7 +21,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(THIRDPARTY_DIR "${PROJECT_SOURCE_DIR}/thirdparty")
 
-find_package(ZeroMQ REQUIRED)
+find_package(cppzmq REQUIRED)
 find_package(Threads REQUIRED)
 
 # Set the include directory
@@ -32,9 +32,11 @@ execute_process(COMMAND git submodule update --init --recursive
 # These are the include directories
 set(INCLUDE_DIRS
     ./include/
+    ${cppzmq_INCLUDE_DIR}
     ${THIRDPARTY_DIR}/rapidjson/include/
     ${THIRDPARTY_DIR}/spdlog/include/
 )
+
 
 # These include directories are only for testing
 # They are separate so they don't get installed

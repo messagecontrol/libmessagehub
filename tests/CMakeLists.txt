@@ -13,8 +13,8 @@ add_executable(test_manager test_manager.cpp)
 add_executable(test_message test_message.cpp)
 
 message(STATUS ${ZeroMQ_Library})
-target_link_libraries(test_manager gtest gtest_main ${ZeroMQ_Library} messagehub)
-target_link_libraries(test_message gtest gtest_main ${ZeroMQ_Library} messagehub)
+target_link_libraries(test_manager gtest gtest_main ${cppzmq_LIBRARY} messagehub)
+target_link_libraries(test_message gtest gtest_main ${cppzmq_LIBRARY} messagehub)
 
 
 add_test(test-manager test_manager)
