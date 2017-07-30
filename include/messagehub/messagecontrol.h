@@ -52,6 +52,8 @@ class MessageControl {
         void _timer(int time, bool *flag);
         bool handshake(const std::string &addr);
 
+        void _connect(const std::string &ipaddrWithPort, const std::string &name, const Message_ptr = nullptr);
+
     public:
 
         MessageControl(const std::string &id, const std::string &hostAddr, const int &bindingPort);
@@ -59,15 +61,19 @@ class MessageControl {
 
         void run();
         void initializeLog();
+        std::string getIdentity();
 
         std::string getAddr();
+
+        int getInQueueSize();
+        int getOutQueueSize();
 
         void send(Message_ptr msg, const std::string &dst);
 
         Message_ptr recv();
 
-        bool connect(const std::string &ipaddr, const int &port, const std::string &name);
-        bool connect(const std::string &ipaddrWithPort, const std::string &name);
+        void connect(const std::string &ipaddr, const int &port, const std::string &name, const Message_ptr msg = nullptr);
+        void connect(const std::string &ipaddrWithPort, const std::string &name, const Message_ptr msg = nullptr);
 };
 
 #endif

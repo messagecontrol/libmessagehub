@@ -46,7 +46,7 @@ void Manager::_checkAllIfUp() {
         for (std::pair<std::string, std::pair<std::string, bool> > connection : msgctl.connections) {
             if (connection.second.second)
                 start = std::chrono::high_resolution_clock::now();
-            connection.second.second = msgctl.connect(connection.first, connection.second.first);
+            msgctl.connect(connection.first, connection.second.first);
             if (connection.second.second)
                 total_diffs = std::chrono::high_resolution_clock::now() - start;
         }

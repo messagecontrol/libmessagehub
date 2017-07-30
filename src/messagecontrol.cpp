@@ -42,12 +42,9 @@ void MessageControl::_run_sender() {
                  !connections.at(outQueue.front().first).second)) {
                 log->debug("{} is not registered as a connected endpoint, preforming handshake",
                            outQueue.front().first);
-                if (!connect(outQueue.front().first, outQueue.front().first)) {
-                    log->error("{} is not up to receive messages, dropping message",
-                               outQueue.front().first);
-                    outQueue.pop();
-                    continue;
-                }
+                connect(outQueue.front().first, outQueue.front().first, outQueue.front().second);
+                outQueue.pop();
+                continue;
             }
             outSock.connect("tcp://" + outQueue.front().first);
             log->trace("About to send: {}", outQueue.front().second->toString());
@@ -145,22 +142,32 @@ void MessageControl::addConnection(const std::string & ipaddr, const std::string
 }
 
 
-bool MessageControl::connect(const std::string &ipaddr, const int &port, const std::string &name) {
+void MessageControl::connect(const std::string &ipaddr, const int &port, const std::string &name, const Message_ptr msg) {
     std::string s = ipaddr + ":" + std::to_string(port);
-    return connect(s, name);
+    connect(s, name, msg);
 }
 
-bool MessageControl::connect(const std::string &ipaddr, const std::string &name) {
+
+void MessageControl::connect(const std::string &ipaddr, const std::string &name, const Message_ptr msg) {
+    std::thread t(&MessageControl::_connect,this, ipaddr, name, msg);
+    t.detach();
+}
+
+void MessageControl::_connect(const std::string &ipaddr, const std::string &name, const Message_ptr msg) {
     log->debug("Initiating handshake with {}", ipaddr);
     if (handshake(ipaddr)) {
         log->info("Successfully connected to {}", name);
-        addConnection(ipaddr, name);
-        return true;
+        if (connections.find(ipaddr) == connections.end())
+            addConnection(ipaddr, name);
+        else
+            connections[ipaddr].second = true;
+        if (msg != nullptr)
+            send(msg, ipaddr);
     } else {
         log->error("Connection timeout for {}", name);
-        return false;
     }
 }
+
 
 MessageControl::MessageControl(const std::string &name, const std::string &ipaddr, const int &bindingPort) {
     identity = name;
@@ -191,7 +198,7 @@ void MessageControl::initializeLog() {
         log_sinks.push_back(color_console_sink);
         log = std::make_shared<spdlog::logger>(identity, std::begin(log_sinks), std::end(log_sinks));//, 4096);
         // This is where the log level is set
-        log->set_level(spdlog::level::debug);
+        log->set_level(spdlog::level::trace);
         spdlog::register_logger(log);
     } catch (const spdlog::spdlog_ex& e) {
         std::cerr << "[ERROR] Log was not initialized\n";
@@ -200,5 +207,17 @@ void MessageControl::initializeLog() {
 }
 
 std::string MessageControl::getAddr() {
-    return returnAddr + std::to_string(port);
+    return returnAddr;
+}
+
+std::string MessageControl::getIdentity() {
+    return identity;
+}
+
+int MessageControl::getInQueueSize() {
+    return inQueue.size();
+}
+
+int MessageControl::getOutQueueSize() {
+    return outQueue.size();
 }
