@@ -25,12 +25,12 @@ class MessageControl {
         int port;
 
         // Control Bools
-        bool still_manage, still_receive, still_send;
+        bool still_receive, still_send;
 
         // Status Bools
         bool waitingOnShake;
 
-        std::unique_ptr<std::thread> manager, receiver, sender;
+        std::unique_ptr<std::thread> receiver, sender;
 
         std::queue<Message_ptr > inQueue;
 
@@ -42,7 +42,6 @@ class MessageControl {
         std::shared_ptr<spdlog::sinks::sink> file_error_sink;
         std::shared_ptr<spdlog::sinks::ansicolor_sink<std::mutex> > color_console_sink;
 
-        void _run_manager();
         void _run_sender();
         void _run_receiver();
 

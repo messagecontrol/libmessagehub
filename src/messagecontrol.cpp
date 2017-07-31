@@ -4,10 +4,7 @@
 MessageControl::~MessageControl() {
     spdlog::drop_all();
     still_send = false;
-    still_manage = false;
     still_receive = false;
-    if(manager->joinable())
-        manager->join();
     if(sender->joinable())
         sender->join();
     if(receiver->joinable())
@@ -16,18 +13,10 @@ MessageControl::~MessageControl() {
 
 void MessageControl::run() {
     log->info("Initializing Threads");
-    manager = std::make_unique<std::thread>(std::thread(&MessageControl::_run_manager, this));
     receiver = std::make_unique<std::thread>(std::thread(&MessageControl::_run_receiver, this));
     sender = std::make_unique<std::thread>(std::thread(&MessageControl::_run_sender, this));
 }
 
-void MessageControl::_run_manager() {
-    log->debug("Started manager");
-    while (still_manage) {
-
-    }
-    log->debug("Manager ended");
-}
 
 void MessageControl::_run_sender() {
     log->debug("Started sender");
@@ -175,7 +164,6 @@ MessageControl::MessageControl(const std::string &name, const std::string &ipadd
     returnAddr = ipaddr + ":" + std::to_string(port);
     initializeLog();
     still_send = true;
-    still_manage = true;
     still_receive = true;
     waitingOnShake = true;
     inQueue = std::queue<Message_ptr >();
