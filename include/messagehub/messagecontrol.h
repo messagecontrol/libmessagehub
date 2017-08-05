@@ -48,7 +48,7 @@ class MessageControl {
         void addConnection(const std::string &ipaddr, const std::string &name);
         void addConnection(const std::string &ipaddr, const int &port, const std::string &name);
 
-        void _timer(int time, bool *flag);
+        void _timer(int time, std::shared_ptr<bool> flag);
         bool handshake(const std::string &addr);
 
         void _connect(const std::string &ipaddrWithPort, const std::string &name, const Message_ptr = nullptr);

@@ -75,6 +75,10 @@ void MessageControl::_run_receiver() {
                 Message_ptr msg = Message::empty();
                 msg->setHeader("type", "SHAKEHAND");
                 log->trace("Constructed message: {}", msg->toString());
+                if (connections.find(m->returnAddr()) == connections.end())
+                    addConnection(m->returnAddr(), m->getFromHeader("identity"));
+                else
+                    connections[m->returnAddr()].second = true;
                 send(msg, m->getFromHeader("returnAddr"));
             } else
                 inQueue.push(std::make_shared<Message>(zmsg));
@@ -92,7 +96,7 @@ void MessageControl::send(Message_ptr m, const std::string &dst) {
 
 Message_ptr MessageControl::recv() {
     if (!inQueue.empty()) {
-        Message_ptr msg = inQueue.front();
+        Message_ptr msg = static_cast<Message_ptr>(inQueue.front());
         inQueue.pop();
         return msg;
     }
@@ -106,8 +110,8 @@ bool MessageControl::handshake(const std::string &ip) {
     log->trace("Initialized empty message");
     msg->setHeader("type", "HANDSHAKE");
     send(Message_ptr(msg), ip);
-    bool timeout = false;
-    std::thread timer(&MessageControl::_timer, this, 30, &timeout);
+    std::shared_ptr<bool> timeout = std::make_unique<bool>(false);
+    std::thread timer(&MessageControl::_timer, this, 30, timeout);
     timer.detach();
     while (waitingOnShake && !timeout) {}
     connected = !waitingOnShake;
@@ -116,9 +120,10 @@ bool MessageControl::handshake(const std::string &ip) {
 }
 
 
-void MessageControl::_timer(int time, bool * flag) {
+void MessageControl::_timer(int time, std::shared_ptr<bool> flag) {
     sleep(time);
-    *flag = true;
+    if (flag != nullptr)
+        *flag = true;
 }
 
 void MessageControl::addConnection(const std::string & ipaddr, const int &port, const std::string & name) {
@@ -138,8 +143,10 @@ void MessageControl::connect(const std::string &ipaddr, const int &port, const s
 
 
 void MessageControl::connect(const std::string &ipaddr, const std::string &name, const Message_ptr msg) {
-    std::thread t(&MessageControl::_connect,this, ipaddr, name, msg);
-    t.detach();
+    if (connections.find(ipaddr) == connections.end()) {
+        std::thread t(&MessageControl::_connect, this, ipaddr, name, msg);
+        t.detach();
+    }
 }
 
 void MessageControl::_connect(const std::string &ipaddr, const std::string &name, const Message_ptr msg) {
