@@ -1,11 +1,11 @@
 #include "messagehub/manager.h"
 
-Manager::Manager(MessageControl& mc) : msgctl(mc) {
+Manager::Manager(std::shared_ptr<MessageControl> mc) : msgctl(mc) {
     try {
-        log = spdlog::stdout_color_mt("console");
+        log = spdlog::stdout_color_mt(std::string("Manager_") + mc->getIdentity());
         // This is where the log level is set
         log->set_level(spdlog::level::debug);
-        spdlog::register_logger(log);
+        //spdlog::register_logger(log);
     } catch (const spdlog::spdlog_ex& e) {
         std::cerr << "[ERROR] Log was not initialized\n";
         std::cerr << "[ERROR] " << e.what() << "\n";
@@ -18,9 +18,13 @@ Manager::Manager(MessageControl& mc) : msgctl(mc) {
     stillNotify = true;
     stillMonitor = true;
     avg_reply_send_receive = 0l;
+    log->info("Created Manager for {}", mc->getIdentity());
 }
 
 Manager::~Manager() {
+    stillNotify = false;
+    stillMonitor = false;
+    stillCheck = false;
     if (checkAllIfUp != nullptr && checkAllIfUp->joinable())
         checkAllIfUp->join();
     if (notifyCentral != nullptr && notifyCentral->joinable())
@@ -43,10 +47,10 @@ void Manager::_checkAllIfUp() {
     while(stillCheck) {
         count = 0;
         total_diffs = std::chrono::nanoseconds(0);
-        for (std::pair<std::string, std::pair<std::string, bool> > connection : msgctl.connections) {
+        for (std::pair<std::string, std::pair<std::string, bool> > connection : msgctl->connections) {
             if (connection.second.second)
                 start = std::chrono::high_resolution_clock::now();
-            msgctl.connect(connection.first, connection.second.first);
+            msgctl->connect(connection.first, connection.second.first);
             if (connection.second.second)
                 total_diffs = std::chrono::high_resolution_clock::now() - start;
         }
@@ -64,7 +68,7 @@ void Manager::_monitor() {
     while(stillMonitor) {
         a_count = 0;
         i_count = 0;
-        for (std::pair<std::string, std::pair<std::string, bool> > connection : msgctl.connections) {
+        for (std::pair<std::string, std::pair<std::string, bool> > connection : msgctl->connections) {
             if (connection.second.second)
                 a_count++;
             else
@@ -72,8 +76,8 @@ void Manager::_monitor() {
         }
         activeConns = a_count;
         inactiveConns = i_count;
-        inQueueMsgs = msgctl.inQueue.size();
-        outQueueMsgs = msgctl.outQueue.size();
+        inQueueMsgs = msgctl->getInQueueSize();
+        outQueueMsgs = msgctl->getOutQueueSize();
         std::this_thread::sleep_for(2s); 
     }
 }

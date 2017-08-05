@@ -27,7 +27,7 @@ class MessageControl;
 class Manager {
     protected:
         Status status;
-        MessageControl& msgctl;
+        std::shared_ptr<MessageControl> msgctl;
         std::unique_ptr<std::thread> checkAllIfUp, notifyCentral, monitor;
         bool stillCheck, stillNotify, stillMonitor;
         std::shared_ptr<spdlog::logger> log;
@@ -39,10 +39,9 @@ class Manager {
         void _monitor(); // Run in thread
 
     public:
-        Manager(MessageControl& mc);
+        Manager(std::shared_ptr<MessageControl> mc);
         ~Manager();
         void run();
-
 };
 
 #endif

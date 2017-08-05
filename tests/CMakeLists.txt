@@ -6,23 +6,27 @@ find_package(Threads REQUIRED)
 set(TEST_SRCS
         test_message.cpp
         test_messagecontrol.cpp
+        test_manager.cpp
 )
 
 
 add_executable(test_messagecontrol test_messagecontrol.cpp)
 add_executable(test_message test_message.cpp)
+add_executable(test_manager test_manager.cpp)
 
 message(STATUS ${ZeroMQ_Library})
 target_link_libraries(test_messagecontrol gtest gtest_main ${cppzmq_LIBRARY} messagehub)
 target_link_libraries(test_message gtest gtest_main ${cppzmq_LIBRARY} messagehub)
-
+target_link_libraries(test_manager gtest gtest_main ${cppzmq_LIBRARY} messagehub)
 
 add_test(test-messagecontrol test_messagecontrol)
 add_test(test-message test_message)
+add_test(test-manager test_manager)
 
 set(TEST_EXECUTABLES
-    ./test_messagecontrol
-    ./test_message
+        ./test_messagecontrol
+        ./test_message
+        ./test_manager
 )
 
 add_custom_target(check 
